@@ -9,6 +9,7 @@ dependencies = [
     "aiofiles>=25.1.0",
     "aiohttp>=3.13.2",
     "aiolimiter>=1.2.1",
+    "parsel>=1.10.0",
 ]
 
 [build-system]
