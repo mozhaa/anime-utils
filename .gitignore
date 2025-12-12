@@ -12,3 +12,4 @@ wheels/
 .roo/
 plans/
 examples/
+*.html
