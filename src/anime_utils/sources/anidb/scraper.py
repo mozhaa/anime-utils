@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from ..base import BaseClient
+from .core import get_tags
+from .types import AniDBTags
 
 
 class AniDBScraper(BaseClient):
@@ -16,13 +18,14 @@ class AniDBScraper(BaseClient):
         """
         super().__init__(cache_dir, max_rate, time_period, base_url="https://anidb.net")
 
-    async def get_tags(self, anime_id: str) -> None:
+    async def get_tags(self, anime_id: str) -> AniDBTags:
         """Get tags for an anime from AniDB.
 
         Args:
             anime_id: The AniDB anime ID
 
         Returns:
-            List of tags for the anime
+            List of tags for anime
         """
-        raise NotImplementedError()
+        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        return get_tags(text)
