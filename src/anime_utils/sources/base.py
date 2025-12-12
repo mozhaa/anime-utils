@@ -20,7 +20,7 @@ class BaseClient:
         self._http_client: CachedHTTPClient | None = None
 
     async def __aenter__(self):
-        self._session = ClientSession(headers=default_headers)
+        self._session = ClientSession(base_url=self.base_url, headers=default_headers)
         self._limiter = AsyncLimiter(self.max_rate, self.time_period)
         self._cache = FileCache(self.cache_dir)
         self._http_client = CachedHTTPClient(self._session, self._cache, self._limiter)
