@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 
-from anime_utils.sources.anidb.core import get_anime_tags
+from anime_utils.sources.anidb.core import get_anime_tags, get_episode_tags
 from anime_utils.sources.anidb.types import AniDBAnimeTag
 
 
@@ -52,3 +52,26 @@ def test_get_anime_tags(
     assert tag["weight"] == weight
     assert tag["is_abstract"] == is_abstract
     assert tag["not_added"] == not_added
+
+
+@pytest.mark.parametrize(
+    "name, id_, description_substring, episode_count, episode_list",
+    [
+        ("boobs in your face", 2815, "cleavage", 1, "12"),
+        ("photo shoot", 6988, "fashion", 3, "3, 7-8"),
+        ("pool episode", 6046, "beach", 2, "2, 7"),
+    ],
+)
+def test_get_episode_tags(
+    tags_html: str, name: str, id_: int, description_substring: str, episode_count: int, episode_list: str
+):
+    episode_tags = get_episode_tags(tags_html)
+
+    for tag in episode_tags:
+        if tag["name"] == name:
+            assert description_substring in tag["description"]
+            assert tag["episode_count"] == episode_count
+            assert tag["episode_list"] == episode_list
+            break
+    else:
+        pytest.fail("tag not found")
