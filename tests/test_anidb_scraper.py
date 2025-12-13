@@ -86,6 +86,7 @@ def test_get_episode_tags(
         ("fetish appeals", "small breasts", 2008, "flat chested", 1, 1),
         ("looks", "black hair", 2241, "black hair", 7, 9),
         ("looks", "handsome", 290, "", 1, 1),
+        ("traits", "timid", 1465, "shy", 1, 2),
     ],
 )
 def test_get_character_tags(
