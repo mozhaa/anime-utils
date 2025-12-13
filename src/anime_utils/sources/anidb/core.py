@@ -2,7 +2,7 @@ import re
 
 import parsel
 
-from .types import AniDBAnimeTag, AniDBCharacterTagCategory, AniDBEpisodeTag, AniDBTags
+from .types import AniDBAnimeTag, AniDBCharacterTag, AniDBCharacterTagCategory, AniDBEpisodeTag, AniDBTags
 
 
 def get_anime_tags(text: str) -> list[AniDBAnimeTag]:
@@ -52,7 +52,7 @@ def get_anime_tags(text: str) -> list[AniDBAnimeTag]:
         )
 
         # find parent tag using indent value
-        indent = (tag_element.css(".indent::text").get() or "").count("·")
+        indent = tag_element.css(".indent::text").get("").count("·")
         list_to_add = anime_tags
         for _ in range(indent):
             if len(list_to_add) == 0:
@@ -69,7 +69,7 @@ def get_episode_tags(text: str) -> list[AniDBEpisodeTag]:
 
     episode_tags: list[AniDBEpisodeTag] = []
 
-    for tag_element in selector.css(".tag[data-anidb-groupid='eptb_0']"):
+    for tag_element in selector.css(".animetags .tag[data-anidb-groupid='eptb_0']"):
         name = tag_element.css(".tagname::text").get()
         if name is None:
             raise RuntimeError(f"tag has no name: {tag_element.get()}")
@@ -118,7 +118,48 @@ def get_episode_tags(text: str) -> list[AniDBEpisodeTag]:
 
 
 def get_character_tags(text: str) -> list[AniDBCharacterTagCategory]:
-    pass
+    selector = parsel.Selector(text=text)
+
+    categories: list[AniDBCharacterTagCategory] = []
+
+    for category_element in selector.css("#chartags > div[class]"):
+        category_name = category_element.css("h3 .tagname::text").get("").strip()
+        if category_name == "":
+            continue
+
+        tags: list[AniDBCharacterTag] = []
+        for tag_element in category_element.css(".tag"):
+            name = tag_element.css(".tagname::text").get("").strip()
+            if name == "":
+                raise RuntimeError(f"tag has no name: {tag_element.get()}")
+
+            count = tag_element.css(".tagname .cnt::text").get()
+            m = re.match(r"\((\d+)\)", count.strip())
+            if m is None:
+                raise RuntimeError(f"failed to get count from cnt: {count}")
+            count = int(m.group(1))
+
+            href = tag_element.css("a::attr(href)").get()
+            if href is None:
+                raise RuntimeError(f"href not found inside tag: {tag_element.get()}")
+            m = re.search(r"/tag/(\d+)/", href)
+            if m is None:
+                raise RuntimeError(f"failed to get tag id from href: {href}")
+            id_ = int(m.group(1))
+
+            class_attr = tag_element.css("::attr(class)").get()
+            if class_attr is None:
+                raise RuntimeError(f"tag element has no size* class: {class_attr}")
+            m = re.search(r"size(\d+)", class_attr)
+            if m is None:
+                raise RuntimeError(f"failed to get size from size* class: {class_attr}")
+            size = int(m.group(1))
+
+            tags.append(AniDBCharacterTag(name=name, id_=id_, character_count=count, size=size))
+
+        categories.append(AniDBCharacterTagCategory(category=category_name, tags=tags))
+
+    return categories
 
 
 def get_tags(text: str) -> AniDBTags:
