@@ -26,7 +26,12 @@ class AniDBCharacterTag(TypedDict):
     size: int
 
 
+class AniDBCharacterTagCategory(TypedDict):
+    category: str
+    tags: list[AniDBCharacterTag]
+
+
 class AniDBTags(TypedDict):
     anime_tags: list[AniDBAnimeTag]
     episode_tags: list[AniDBEpisodeTag]
-    character_tags: list[AniDBCharacterTag]
+    character_tags: list[AniDBCharacterTagCategory]

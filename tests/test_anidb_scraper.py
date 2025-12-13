@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 
-from anime_utils.sources.anidb.core import get_anime_tags, get_episode_tags
+from anime_utils.sources.anidb.core import get_anime_tags, get_character_tags, get_episode_tags
 from anime_utils.sources.anidb.types import AniDBAnimeTag
 
 
@@ -75,3 +75,35 @@ def test_get_episode_tags(
             break
     else:
         pytest.fail("tag not found")
+
+
+@pytest.mark.parametrize(
+    "category, name, id_, character_count, size",
+    [
+        ("traits", "adolescent", 2224, 8, 10),
+        ("clothing", "miniskirt", 2451, 3, 6),
+        ("traits", "child", 2414, 1, 0),
+        ("fetish appeals", "small breasts", 2008, 1, 1),
+        ("looks", "black hair", 2241, 7, 9),
+    ],
+)
+def test_get_character_tags(
+    tags_html: str,
+    category: str,
+    name: str,
+    id_: int,
+    character_count: int,
+    size: int,
+):
+    character_tags = get_character_tags(tags_html)
+
+    for tag_category in character_tags:
+        if tag_category["category"] == category:
+            for tag in tag_category["tags"]:
+                if tag["name"] == name:
+                    assert tag["id_"] == id_
+                    assert tag["character_count"] == character_count
+                    assert tag["size"] == size
+                    return
+            pytest.fail("tag not found in category")
+    pytest.fail("category not found")

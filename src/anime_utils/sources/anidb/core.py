@@ -2,7 +2,7 @@ import re
 
 import parsel
 
-from .types import AniDBAnimeTag, AniDBCharacterTag, AniDBEpisodeTag, AniDBTags
+from .types import AniDBAnimeTag, AniDBCharacterTagCategory, AniDBEpisodeTag, AniDBTags
 
 
 def get_anime_tags(text: str) -> list[AniDBAnimeTag]:
@@ -117,7 +117,7 @@ def get_episode_tags(text: str) -> list[AniDBEpisodeTag]:
     return episode_tags
 
 
-def get_character_tags(text: str) -> list[AniDBCharacterTag]:
+def get_character_tags(text: str) -> list[AniDBCharacterTagCategory]:
     pass
 
 
