@@ -2,7 +2,7 @@ from pathlib import Path
 
 from ..base import BaseClient
 from .core import get_tags
-from .types import AniDBTags, AniDBMainInfo, AniDBCharacter, AniDBSimilarAnime
+from .types import AniDBCharacter, AniDBMainInfo, AniDBSimilarAnime, AniDBTags
 
 
 class AniDBScraper(BaseClient):

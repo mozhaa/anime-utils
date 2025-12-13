@@ -8,14 +8,9 @@ from anime_utils.sources.anidb.core import (
     get_characters,
     get_episode_tags,
     get_main_info,
+    get_similar,
 )
 from anime_utils.sources.anidb.types import AniDBAnimeTag, AniDBCharacter
-
-
-@pytest.fixture
-def tags_html() -> str:
-    with open("tests/resources/anidb_7286_tags.html", "r", encoding="utf-8") as f:
-        return f.read()
 
 
 @pytest.fixture
@@ -48,7 +43,7 @@ def _find_tag(tags: list[AniDBAnimeTag], path: list[str]) -> AniDBAnimeTag:
     ],
 )
 def test_get_anime_tags(
-    tags_html: str,
+    page_html: str,
     tag_hierarchy: list[str],
     id_: int,
     description_substring: str,
@@ -56,7 +51,7 @@ def test_get_anime_tags(
     is_abstract: bool,
     not_added: bool,
 ):
-    anime_tags = get_anime_tags(tags_html)
+    anime_tags = get_anime_tags(page_html)
 
     tag = _find_tag(anime_tags, tag_hierarchy)
     assert tag["id_"] == id_
@@ -75,9 +70,9 @@ def test_get_anime_tags(
     ],
 )
 def test_get_episode_tags(
-    tags_html: str, name: str, id_: int, description_substring: str, episode_count: int, episode_list: str
+    page_html: str, name: str, id_: int, description_substring: str, episode_count: int, episode_list: str
 ):
-    episode_tags = get_episode_tags(tags_html)
+    episode_tags = get_episode_tags(page_html)
 
     for tag in episode_tags:
         if tag["name"] == name:
@@ -102,7 +97,7 @@ def test_get_episode_tags(
     ],
 )
 def test_get_character_tags(
-    tags_html: str,
+    page_html: str,
     category: str,
     name: str,
     id_: int,
@@ -110,7 +105,7 @@ def test_get_character_tags(
     character_count: int,
     size: int,
 ):
-    character_tags = get_character_tags(tags_html)
+    character_tags = get_character_tags(page_html)
 
     for tag_category in character_tags:
         if tag_category["category"] == category:
@@ -205,3 +200,29 @@ def test_get_characters(
     for tag in tags_sublist:
         assert tag in character["main_tags"]
     assert character["seiyuu"] == seiyuu
+
+
+@pytest.mark.parametrize(
+    "name, id_, general_info, approval_percentage, approval_vote_count",
+    [
+        ("Hajimete no Gal", 12554, "TV Series, 2017, 10 eps,", 88.24, 17),
+        ("Midara na Ao-chan wa Benkyou ga Dekinai", 14519, "TV Series, 2019, 12 eps,", 84.62, 13),
+        ("Joshikousei: Girl`s High", 4067, "TV Series, 2006, 12 eps,", 83.33, 12),
+        ("Onii-chan no Koto Nanka Zenzen Suki ja Naindakara ne!!", 7978, "TV Series, 2011, 12 eps,", 53.45, 58),
+    ],
+)
+def test_get_similar(
+    page_html: str, name: str, id_: int, general_info: str, approval_percentage: float, approval_vote_count: int
+):
+    similar_anime = get_similar(page_html)
+
+    assert len(similar_anime) == 4
+
+    for anime in similar_anime:
+        if anime["name"] == name:
+            assert anime["id_"] == id_
+            assert anime["general_info"] == general_info
+            assert anime["approval_percentage"] == approval_percentage
+            assert anime["approval_vote_count"] == approval_vote_count
+            return
+    pytest.fail(f"similar anime with name {name} was not found")

@@ -10,6 +10,7 @@ from .types import (
     AniDBCharacterTagCategory,
     AniDBEpisodeTag,
     AniDBMainInfo,
+    AniDBSimilarAnime,
     AniDBTags,
 )
 
@@ -318,3 +319,48 @@ def get_characters(text: str) -> list[AniDBCharacter]:
         )
 
     return characters
+
+
+def get_similar(text: str) -> list[AniDBSimilarAnime]:
+    selector = parsel.Selector(text=text)
+
+    similar_animes: list[AniDBSimilarAnime] = []
+
+    for anime_element in selector.css("#similaranime .approved"):
+        name = anime_element.css(".name a::text").get("").strip()
+        if name == "":
+            raise RuntimeError(f"similar anime has no name: {anime_element.get()}")
+
+        href = anime_element.css(".name a::attr(href)").get()
+        if href is None:
+            raise RuntimeError(f"similar anime has no href: {anime_element.get()}")
+        m = re.match(r"/anime/(\d+)", href)
+        if m is None:
+            raise RuntimeError(f"failed to get anime id from href: {href}")
+        id_ = int(m.group(1))
+
+        general_info = anime_element.css(".info .series::text").get("").strip()
+        if general_info == "":
+            raise RuntimeError(f"similar anime has no general info: {anime_element.get()}")
+
+        approval_text = anime_element.css(".approval::text").get()
+        if approval_text is None:
+            raise RuntimeError(f"similar anime has no approval text: {anime_element.get()}")
+
+        approval_match = re.search(r"(\d+\.\d+)%\s*\((\d+)\s+votes\)", approval_text.strip())
+        if approval_match is None:
+            raise RuntimeError(f"failed to parse approval from: {approval_text}")
+        approval_percentage = float(approval_match.group(1))
+        approval_vote_count = int(approval_match.group(2))
+
+        similar_animes.append(
+            AniDBSimilarAnime(
+                name=name,
+                id_=id_,
+                general_info=general_info,
+                approval_percentage=approval_percentage,
+                approval_vote_count=approval_vote_count,
+            )
+        )
+
+    return similar_animes
