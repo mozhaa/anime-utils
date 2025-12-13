@@ -2,13 +2,19 @@ from typing import Optional
 
 import pytest
 
-from anime_utils.sources.anidb.core import get_anime_tags, get_character_tags, get_episode_tags
+from anime_utils.sources.anidb.core import get_anime_tags, get_character_tags, get_episode_tags, get_main_info
 from anime_utils.sources.anidb.types import AniDBAnimeTag
 
 
 @pytest.fixture
 def tags_html() -> str:
-    with open("tests/resources/anidb_tags.html", "r", encoding="utf-8") as f:
+    with open("tests/resources/anidb_7286_tags.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@pytest.fixture
+def page_html() -> str:
+    with open("tests/resources/anidb_7286.html", "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -111,3 +117,30 @@ def test_get_character_tags(
                     return
             pytest.fail("tag not found in category")
     pytest.fail("category not found")
+
+
+def test_get_main_info(page_html: str):
+    info = get_main_info(page_html)
+
+    assert info["main_title"] == "B Gata H Kei"
+    assert info["type_"] == "TV Series, 12 episodes"
+    assert info["year"] == "02.04.2010 until 18.06.2010"
+    assert info["season"] == "Spring 2010"
+    assert info["main_tags"] == [
+        "4-koma manga",
+        "comedy",
+        "coming of age",
+        "ecchi",
+        "love polygon",
+        "manga",
+        "seinen",
+        "the arts",
+    ]
+    assert info["rating_value"] == 5.24
+    assert info["rating_vote_count"] == 4912
+    assert info["average_value"] == 6.93
+    assert info["average_vote_count"] == 4957
+    assert "manga by Sanri Youko" in info["description"]
+    assert "sexually inexperienced schoolgirl" in info["description"]
+    assert "her seduction attempts begin..." in info["description"]
+

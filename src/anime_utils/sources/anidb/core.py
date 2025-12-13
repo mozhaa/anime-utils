@@ -2,7 +2,14 @@ import re
 
 import parsel
 
-from .types import AniDBAnimeTag, AniDBCharacterTag, AniDBCharacterTagCategory, AniDBEpisodeTag, AniDBTags
+from .types import (
+    AniDBAnimeTag,
+    AniDBCharacterTag,
+    AniDBCharacterTagCategory,
+    AniDBEpisodeTag,
+    AniDBMainInfo,
+    AniDBTags,
+)
 
 
 def get_anime_tags(text: str) -> list[AniDBAnimeTag]:
@@ -176,3 +183,9 @@ def get_tags(text: str) -> AniDBTags:
         episode_tags=get_episode_tags(text),
         character_tags=get_character_tags(text),
     )
+
+
+def get_main_info(text: str) -> AniDBMainInfo:
+    selector = parsel.Selector(text=text)
+
+    # TODO

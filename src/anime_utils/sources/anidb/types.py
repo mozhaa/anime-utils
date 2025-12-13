@@ -36,3 +36,34 @@ class AniDBTags(TypedDict):
     anime_tags: list[AniDBAnimeTag]
     episode_tags: list[AniDBEpisodeTag]
     character_tags: list[AniDBCharacterTagCategory]
+
+
+class AniDBMainInfo(TypedDict):
+    main_title: str
+    type_: str
+    year: str
+    season: str
+    main_tags: list[str]
+    rating_value: float
+    rating_vote_count: int
+    average_value: float
+    average_vote_count: int
+    description: str
+
+
+class AniDBCharacter(TypedDict):
+    name: str
+    id_: int
+    general_info: str
+    rating_value: float
+    rating_vote_count: int
+    tags: list[str]
+    seiyuu: str
+
+
+class AniDBSimilarAnime(TypedDict):
+    name: str
+    id_: int
+    general_info: str
+    approval_percentage: float
+    approval_vote_count: int
