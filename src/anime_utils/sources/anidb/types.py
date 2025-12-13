@@ -22,6 +22,7 @@ class AniDBEpisodeTag(TypedDict):
 class AniDBCharacterTag(TypedDict):
     name: str
     id_: int
+    description: str
     character_count: int
     size: int
 

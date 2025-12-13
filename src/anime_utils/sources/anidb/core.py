@@ -147,6 +147,10 @@ def get_character_tags(text: str) -> list[AniDBCharacterTagCategory]:
                 raise RuntimeError(f"failed to get tag id from href: {href}")
             id_ = int(m.group(1))
 
+            description = tag_element.css(".g_bubble.text::text").get()
+            if description is None:
+                raise RuntimeError(f"no description inside tag: {tag_element.get()}")
+
             class_attr = tag_element.css("::attr(class)").get()
             if class_attr is None:
                 raise RuntimeError(f"tag element has no size* class: {class_attr}")
@@ -155,7 +159,9 @@ def get_character_tags(text: str) -> list[AniDBCharacterTagCategory]:
                 raise RuntimeError(f"failed to get size from size* class: {class_attr}")
             size = int(m.group(1))
 
-            tags.append(AniDBCharacterTag(name=name, id_=id_, character_count=count, size=size))
+            tags.append(
+                AniDBCharacterTag(name=name, id_=id_, description=description, character_count=count, size=size)
+            )
 
         categories.append(AniDBCharacterTagCategory(category=category_name, tags=tags))
 

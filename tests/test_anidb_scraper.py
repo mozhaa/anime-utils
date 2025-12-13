@@ -78,13 +78,14 @@ def test_get_episode_tags(
 
 
 @pytest.mark.parametrize(
-    "category, name, id_, character_count, size",
+    "category, name, id_, description_substring, character_count, size",
     [
-        ("traits", "adolescent", 2224, 8, 10),
-        ("clothing", "miniskirt", 2451, 3, 6),
-        ("traits", "child", 2414, 1, 0),
-        ("fetish appeals", "small breasts", 2008, 1, 1),
-        ("looks", "black hair", 2241, 7, 9),
+        ("traits", "adolescent", 2224, "13 to 19", 8, 10),
+        ("clothing", "miniskirt", 2451, "hemline", 3, 6),
+        ("traits", "child", 2414, "3 to 12", 1, 0),
+        ("fetish appeals", "small breasts", 2008, "flat chested", 1, 1),
+        ("looks", "black hair", 2241, "black hair", 7, 9),
+        ("looks", "handsome", 290, "", 1, 1),
     ],
 )
 def test_get_character_tags(
@@ -92,6 +93,7 @@ def test_get_character_tags(
     category: str,
     name: str,
     id_: int,
+    description_substring: str,
     character_count: int,
     size: int,
 ):
@@ -102,6 +104,7 @@ def test_get_character_tags(
             for tag in tag_category["tags"]:
                 if tag["name"] == name:
                     assert tag["id_"] == id_
+                    assert description_substring in tag["description"]
                     assert tag["character_count"] == character_count
                     assert tag["size"] == size
                     return
