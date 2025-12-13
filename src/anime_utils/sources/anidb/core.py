@@ -188,4 +188,63 @@ def get_tags(text: str) -> AniDBTags:
 def get_main_info(text: str) -> AniDBMainInfo:
     selector = parsel.Selector(text=text)
 
-    # TODO
+    main_title = selector.css("#tab_1_pane [itemprop='name']::text").get()
+    if main_title is None:
+        raise RuntimeError("main title not found")
+
+    type_ = "".join(selector.css("#tab_1_pane tr.type .value *::text").getall())
+    if type_ == "":
+        raise RuntimeError("type not found")
+
+    year = "".join(selector.css("#tab_1_pane tr.year .value *::text").getall())
+    if year == "":
+        raise RuntimeError("year not found")
+
+    season = "".join(selector.css("#tab_1_pane tr.season .value *::text").getall())
+    if season == "":
+        raise RuntimeError("season not found")
+
+    main_tags_elements = selector.css("#tab_1_pane tr.tags [itemprop='genre']")
+    main_tags = []
+    for tag_element in main_tags_elements:
+        tag_text = tag_element.css("::text").get()
+        if tag_text:
+            main_tags.append(tag_text.strip())
+
+    rating_value_text = selector.css("#tab_1_pane tr.rating [itemprop='ratingValue']::text").get()
+    if rating_value_text is None:
+        raise RuntimeError("rating value not found")
+    rating_value = float(rating_value_text.strip())
+
+    rating_vote_count_text = selector.css("#tab_1_pane tr.rating [itemprop='ratingCount']::text").get()
+    if rating_vote_count_text is None:
+        raise RuntimeError("rating vote count not found")
+    rating_vote_count = int(rating_vote_count_text.strip("()"))
+
+    average_value_text = selector.css("#tab_1_pane tr.tmprating .value::text").get()
+    if average_value_text is None:
+        raise RuntimeError("average value not found")
+    average_value = float(average_value_text.strip())
+
+    average_vote_count_text = selector.css("#tab_1_pane tr.tmprating .count::text").get()
+    if average_vote_count_text is None:
+        raise RuntimeError("average vote count not found")
+    average_vote_count = int(average_vote_count_text.strip("()"))
+
+    description = "".join(selector.css(".g_section.desc *::text").getall())
+    if description is None:
+        raise RuntimeError("description not found")
+    description = description.strip()
+
+    return AniDBMainInfo(
+        main_title=main_title.strip(),
+        type_=type_.strip(),
+        year=year.strip(),
+        season=season.strip(),
+        main_tags=main_tags,
+        rating_value=rating_value,
+        rating_vote_count=rating_vote_count,
+        average_value=average_value,
+        average_vote_count=average_vote_count,
+        description=description,
+    )
