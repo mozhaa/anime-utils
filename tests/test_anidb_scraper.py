@@ -2,8 +2,14 @@ from typing import Optional
 
 import pytest
 
-from anime_utils.sources.anidb.core import get_anime_tags, get_character_tags, get_episode_tags, get_main_info
-from anime_utils.sources.anidb.types import AniDBAnimeTag
+from anime_utils.sources.anidb.core import (
+    get_anime_tags,
+    get_character_tags,
+    get_characters,
+    get_episode_tags,
+    get_main_info,
+)
+from anime_utils.sources.anidb.types import AniDBAnimeTag, AniDBCharacter
 
 
 @pytest.fixture
@@ -144,3 +150,58 @@ def test_get_main_info(page_html: str):
     assert "sexually inexperienced schoolgirl" in info["description"]
     assert "her seduction attempts begin..." in info["description"]
 
+
+def _find_character(characters: list[AniDBCharacter], id_: int) -> AniDBCharacter:
+    for character in characters:
+        if character["id_"] == id_:
+            return character
+    pytest.fail(f"character with id {id_} was not found")
+
+
+@pytest.mark.parametrize(
+    "name, id_, is_main, general_info, rating_value, rating_vote_count, tags_sublist, seiyuu",
+    [
+        (
+            "Katase Aoi",
+            15171,
+            False,
+            "female",
+            4.92,
+            22,
+            ["adolescent", "miniskirt", "student", "tsukkomi"],
+            "Kitta Izumi",
+        ),
+        (
+            "Yamada ",
+            13815,
+            True,
+            "female",
+            6.49,
+            83,
+            ["miniskirt", "perverted", "school library committee member"],
+            "Tamura Yukari",
+        ),
+    ],
+)
+def test_get_characters(
+    page_html: str,
+    name: str,
+    id_: int,
+    is_main: bool,
+    general_info: str,
+    rating_value: float,
+    rating_vote_count: int,
+    tags_sublist: list[str],
+    seiyuu: str,
+):
+    characters = get_characters(page_html)
+
+    character = _find_character(characters, id_)
+    assert character["name"] == name
+    assert character["is_main"] == is_main
+    assert character["general_info"] == general_info
+    assert character["rating_value"] == rating_value
+    assert character["rating_vote_count"] == rating_vote_count
+    for tag in tags_sublist:
+        assert tag in character["main_tags"]
+    assert character["seiyuu"] == seiyuu

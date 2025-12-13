@@ -54,6 +54,7 @@ class AniDBMainInfo(TypedDict):
 class AniDBCharacter(TypedDict):
     name: str
     id_: int
+    is_main: bool
     general_info: str
     rating_value: float
     rating_vote_count: int

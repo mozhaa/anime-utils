@@ -4,6 +4,7 @@ import parsel
 
 from .types import (
     AniDBAnimeTag,
+    AniDBCharacter,
     AniDBCharacterTag,
     AniDBCharacterTagCategory,
     AniDBEpisodeTag,
@@ -248,3 +249,7 @@ def get_main_info(text: str) -> AniDBMainInfo:
         average_vote_count=average_vote_count,
         description=description,
     )
+
+
+def get_characters(text: str) -> list[AniDBCharacter]:
+    pass
