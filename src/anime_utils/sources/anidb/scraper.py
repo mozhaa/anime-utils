@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from ..base import BaseClient
-from .core import get_tags
+from .core import get_characters, get_main_info, get_similar, get_tags
 from .types import AniDBCharacter, AniDBMainInfo, AniDBSimilarAnime, AniDBTags
 
 
@@ -31,13 +31,40 @@ class AniDBScraper(BaseClient):
         return get_tags(text)
 
     async def get_main_info(self, anime_id: str) -> AniDBMainInfo:
-        pass
+        """Get main information for an anime from AniDB.
+
+        Args:
+            anime_id: The AniDB anime ID
+
+        Returns:
+            Main information about the anime
+        """
+        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        return get_main_info(text)
 
     async def get_characters(self, anime_id: str) -> list[AniDBCharacter]:
-        pass
+        """Get character information for an anime from AniDB.
+
+        Args:
+            anime_id: The AniDB anime ID
+
+        Returns:
+            List of characters in the anime
+        """
+        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        return get_characters(text)
 
     async def get_similar(self, anime_id: str) -> list[AniDBSimilarAnime]:
-        pass
+        """Get similar anime recommendations from AniDB.
+
+        Args:
+            anime_id: The AniDB anime ID
+
+        Returns:
+            List of similar anime
+        """
+        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        return get_similar(text)
 
     # async def search(self) -> None:
     #     pass
