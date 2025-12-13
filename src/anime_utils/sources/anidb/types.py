@@ -58,7 +58,7 @@ class AniDBCharacter(TypedDict):
     general_info: str
     rating_value: float
     rating_vote_count: int
-    tags: list[str]
+    main_tags: list[str]
     seiyuu: str
 
 

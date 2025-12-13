@@ -1,3 +1,4 @@
+import itertools
 import re
 
 import parsel
@@ -252,4 +253,68 @@ def get_main_info(text: str) -> AniDBMainInfo:
 
 
 def get_characters(text: str) -> list[AniDBCharacter]:
-    pass
+    selector = parsel.Selector(text=text)
+
+    characters: list[AniDBCharacter] = []
+
+    character_selector = '#characterlist .{} [id^="charid_"]'
+    main_chars = selector.css(character_selector.format("main"))
+    secondary_chars = selector.css(character_selector.format("secondary"))
+    chars_iter = itertools.chain(
+        zip(main_chars, itertools.repeat(True)),
+        zip(secondary_chars, itertools.repeat(False)),
+    )
+
+    for character_element, is_main in chars_iter:
+        id_attr = character_element.css("::attr(id)").get()
+        if id_attr is None:
+            raise RuntimeError(f"character element has no id: {character_element.get()}")
+
+        m = re.match(r"(?:charid_|crtid_)(\d+)", id_attr)
+        if m is None:
+            raise RuntimeError(f"failed to get character id from id: {id_attr}")
+        id_ = int(m.group(1))
+
+        name = character_element.css(".data > .name [itemprop='name']::text").get("").strip()
+        if name == "":
+            raise RuntimeError(f"character has no name: {character_element.get()}")
+
+        general_info = character_element.css(".general::text").get("").strip(" \n,")
+
+        rating_value_text = character_element.css(".rating .value::text").get()
+        if rating_value_text is None:
+            rating_value = 0.0
+        else:
+            rating_value = float(rating_value_text.strip())
+
+        rating_vote_count_text = character_element.css(".rating .count::text").get()
+        if rating_vote_count_text is None:
+            rating_vote_count = 0
+        else:
+            rating_vote_count = int(rating_vote_count_text.strip("()"))
+
+        main_tags = []
+        for tag_element in character_element.css(".general .g_tag .tagname"):
+            main_tags.append(tag_element.css("::text").get("").strip())
+        print(main_tags, name)
+
+        seiyuu_element = character_element.css(".seiyuu [itemprop='name']").get()
+        if seiyuu_element is None:
+            seiyuu = ""
+        else:
+            seiyuu = "".join(character_element.css(".seiyuu [itemprop='name']::text").getall()).strip()
+
+        characters.append(
+            AniDBCharacter(
+                name=name,
+                id_=id_,
+                is_main=is_main,
+                general_info=general_info,
+                rating_value=rating_value,
+                rating_vote_count=rating_vote_count,
+                main_tags=main_tags,
+                seiyuu=seiyuu,
+            )
+        )
+
+    return characters
