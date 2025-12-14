@@ -11,6 +11,7 @@ class RateLimitSettings(BaseSettings):
 
 class BaseClientSettings(BaseSettings):
     cookies_file: Optional[str] = None
+    socks_url: Optional[str] = None
     rate_limit: RateLimitSettings
 
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)

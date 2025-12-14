@@ -14,7 +14,11 @@ class AniDBScraper(BaseClient):
     name = "anidb"
 
     def __init__(
-        self, cache_dir: Optional[str] = None, max_rate: Optional[int] = None, time_period: Optional[int] = None
+        self,
+        cache_dir: Optional[str] = None,
+        max_rate: Optional[int] = None,
+        time_period: Optional[int] = None,
+        socks_url: Optional[str] = None,
     ) -> None:
         """Initialize the AniDB scraper.
 
@@ -22,6 +26,7 @@ class AniDBScraper(BaseClient):
             cache_dir: Directory to cache HTTP responses
             max_rate: Maximum number of requests per time period
             time_period: Time period in seconds for rate limiting
+            socks_url: SOCKS proxy URL
         """
         settings = get_settings()
         if cache_dir is None:
@@ -30,7 +35,9 @@ class AniDBScraper(BaseClient):
             max_rate = settings.anidb_scraper_settings.rate_limit.max_rate
         if time_period is None:
             time_period = settings.anidb_scraper_settings.rate_limit.time_period
-        super().__init__(cache_dir, max_rate, time_period, base_url="https://anidb.net")
+        if socks_url is None:
+            socks_url = settings.anidb_scraper_settings.socks_url
+        super().__init__(cache_dir, max_rate, time_period, "https://anidb.net", socks_url)
 
     async def get_tags(self, anime_id: str) -> AniDBTags:
         """Get tags for an anime from AniDB.
