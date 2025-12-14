@@ -44,10 +44,10 @@ class AniDBMainInfo(TypedDict):
     year: str
     season: str
     main_tags: list[str]
-    rating_value: float
-    rating_vote_count: int
-    average_value: float
-    average_vote_count: int
+    rating_value: Optional[float]
+    rating_vote_count: Optional[int]
+    average_value: Optional[float]
+    average_vote_count: Optional[int]
     description: str
 
 
