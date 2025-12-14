@@ -1,5 +1,6 @@
 import itertools
 import re
+from typing import Optional
 
 import parsel
 
@@ -10,6 +11,7 @@ from .types import (
     AniDBCharacterTagCategory,
     AniDBEpisodeTag,
     AniDBMainInfo,
+    AniDBSearchResult,
     AniDBSimilarAnime,
     AniDBTags,
 )
@@ -363,3 +365,80 @@ def get_similar(text: str) -> list[AniDBSimilarAnime]:
         )
 
     return similar_animes
+
+
+def _parse_rating_and_votes(text: str) -> tuple[Optional[float], Optional[int]]:
+    if not text or "N/A" in text.upper():
+        return None, None
+
+    match = re.search(r"(\d+\.\d+)\s*\((\d+)\)", text)
+    if not match:
+        return None, None
+
+    rating = float(match.group(1))
+    votes = int(match.group(2))
+    return rating, votes
+
+
+def get_search_results(text: str) -> list[str]:
+    selector = parsel.Selector(text=text)
+
+    results: list[AniDBSearchResult] = []
+
+    for element in selector.css('#animelist > tbody > tr[id^="a"]'):
+        id_ = element.css("::attr(id)").get("")
+        m = re.match(r"a(\d+)", id_)
+        if m is None:
+            raise RuntimeError(f"failed to parse id from {id_}")
+        id_ = int(m.group(1))
+
+        title = element.css('td[data-label="Title"] a::text').get("").strip()
+        if not title:
+            raise RuntimeError(f"Anime with id {id_} has no title.")
+
+        type_ = element.css('td[data-label="Type"]::text').get()
+        if type_ is None:
+            raise RuntimeError(f"failed to get type from {element.get()}")
+        type_ = type_.strip()
+
+        episodes = element.css('td[data-label="Eps"]::text').get()
+        if episodes is None:
+            raise RuntimeError(f"failed to get episodes from {element.get()}")
+        episodes = int(episodes.strip())
+
+        members = element.css('td[data-label="User"]::text').get()
+        if members is None:
+            raise RuntimeError(f"failed to get user count from {element.get()}")
+        members = int(members.strip())
+
+        aired_date = element.css('td[data-label="Aired"]::text').get()
+        if aired_date is None:
+            raise RuntimeError(f"failed to get aired date from {element.get()}")
+        aired_date = aired_date.strip()
+
+        ended_date = element.css('td[data-label="Ended"]::text').get()
+        if ended_date is None:
+            raise RuntimeError(f"failed to get ended date from {element.get()}")
+        ended_date = ended_date.strip()
+
+        rating_text = element.css('td[data-label="Rating"]::text').get("").strip()
+        rating, rating_votes = _parse_rating_and_votes(rating_text)
+
+        average_rating_text = element.css('td[data-label="Average"]::text').get("").strip()
+        average_rating, average_rating_votes = _parse_rating_and_votes(average_rating_text)
+
+        results.append(
+            AniDBSearchResult(
+                id_=id_,
+                title=title,
+                type=type_,
+                episodes=episodes,
+                rating=rating,
+                rating_votes=rating_votes,
+                average_rating=average_rating,
+                average_rating_votes=average_rating_votes,
+                members=members,
+                aired_date=aired_date,
+                ended_date=ended_date,
+            )
+        )

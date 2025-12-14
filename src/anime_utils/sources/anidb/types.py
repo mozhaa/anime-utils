@@ -68,3 +68,17 @@ class AniDBSimilarAnime(TypedDict):
     general_info: str
     approval_percentage: float
     approval_vote_count: int
+
+
+class AniDBSearchResult(TypedDict):
+    id_: int
+    title: str
+    type: str
+    episodes: int
+    rating: Optional[float]
+    rating_votes: Optional[int]
+    average_rating: Optional[float]
+    average_rating_votes: Optional[int]
+    members: int
+    aired_date: Optional[str]
+    ended_date: Optional[str]

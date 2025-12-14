@@ -1,7 +1,8 @@
 from pathlib import Path
+from urllib.parse import quote, urlencode
 
 from ..base import BaseClient
-from .core import get_characters, get_main_info, get_similar, get_tags
+from .core import get_characters, get_main_info, get_search_results, get_similar, get_tags
 from .types import AniDBCharacter, AniDBMainInfo, AniDBSimilarAnime, AniDBTags
 
 
@@ -66,5 +67,25 @@ class AniDBScraper(BaseClient):
         text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
         return get_similar(text)
 
-    # async def search(self) -> None:
-    #     pass
+    async def search_by_tags(
+        self,
+        atags_include: str = "",
+        atags_exclude: str = "",
+        etags_include: str = "",
+        etags_exclude: str = "",
+        ctags_include: str = "",
+        ctags_exclude: str = "",
+    ) -> None:
+        query_params = {
+            "atags_include": atags_include,
+            "atags_exclude": atags_exclude,
+            "etags_include": etags_include,
+            "etags_exclude": etags_exclude,
+            "ctags_include": ctags_include,
+            "ctags_exclude": ctags_exclude,
+        }
+        query = urlencode(query_params, quote_via=quote)
+
+        # don't cache search results, since they're unlikely to appear twice
+        text = await self._http_client.get(f"/anime/?{query}", None)
+        return get_search_results(text)
