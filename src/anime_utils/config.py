@@ -15,7 +15,7 @@ def configure(cache_dir: Path | str) -> None:
     global _config
 
     if isinstance(cache_dir, str):
-        cache_dir = Path(str)
+        cache_dir = Path(cache_dir)
 
     cache_dir.mkdir(parents=True, exist_ok=True)
     _config = Config(cache_dir=cache_dir)
