@@ -1,3 +1,5 @@
+from typing import Optional
+
 from aiohttp import ClientSession
 from aiolimiter import AsyncLimiter
 
@@ -15,7 +17,7 @@ class CachedHTTPClient:
         self.cache = cache
         self.limiter = limiter
 
-    async def get(self, url: str, cache_key: str) -> str:
+    async def get(self, url: str, cache_key: Optional[str]) -> str:
         cached_data = await self.cache.get(cache_key)
         if cached_data is not None:
             return cached_data.decode("utf-8")
@@ -25,6 +27,7 @@ class CachedHTTPClient:
                 response.raise_for_status()
                 text = await response.text()
 
-                await self.cache.set(cache_key, text.encode("utf-8"))
+                if cache_key is not None:
+                    await self.cache.set(cache_key, text.encode("utf-8"))
 
                 return text
