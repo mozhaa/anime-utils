@@ -231,9 +231,9 @@ def get_main_info(text: str) -> AniDBMainInfo:
             main_tags.append(tag_text.strip())
 
     rating_value = _safe_float(selector.css("#tab_1_pane tr.rating [itemprop='ratingValue']::text").get(""))
-    rating_vote_count = _safe_int(selector.css("#tab_1_pane tr.rating [itemprop='ratingCount']::text").get(""))
+    rating_vote_count = _safe_int(selector.css("#tab_1_pane tr.rating [itemprop='ratingCount']::text").get("")[1:-1])
     average_value = _safe_float(selector.css("#tab_1_pane tr.tmprating .value::text").get(""))
-    average_vote_count = _safe_int(selector.css("#tab_1_pane tr.tmprating .count::text").get(""))
+    average_vote_count = _safe_int(selector.css("#tab_1_pane tr.tmprating .count::text").get("")[1:-1])
 
     description = "".join(selector.css(".g_section.desc *::text").getall())
     if description is None:
