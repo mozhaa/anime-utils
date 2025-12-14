@@ -13,3 +13,6 @@ wheels/
 plans/
 examples/
 *.html
+*.ipynb
+*cookies*
+anime-utils-config.yaml
