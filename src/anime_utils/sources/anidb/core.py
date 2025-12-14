@@ -298,7 +298,6 @@ def get_characters(text: str) -> list[AniDBCharacter]:
         main_tags = []
         for tag_element in character_element.css(".general .g_tag .tagname"):
             main_tags.append(tag_element.css("::text").get("").strip())
-        print(main_tags, name)
 
         seiyuu_element = character_element.css(".seiyuu [itemprop='name']").get()
         if seiyuu_element is None:
