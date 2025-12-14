@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 from urllib.parse import quote, urlencode
 
 from ..base import BaseClient
@@ -75,6 +76,8 @@ class AniDBScraper(BaseClient):
         etags_exclude: str = "",
         ctags_include: str = "",
         ctags_exclude: str = "",
+        order_by: Literal["name", "rating", "average", "ucnt", "airdate", "enddate"] = "name",
+        order_direction: Literal["asc", "desc"] = "asc",
     ) -> None:
         query_params = {
             "atags_include": atags_include,
@@ -83,6 +86,7 @@ class AniDBScraper(BaseClient):
             "etags_exclude": etags_exclude,
             "ctags_include": ctags_include,
             "ctags_exclude": ctags_exclude,
+            f"orderby.{order_by}": f"0.{1 if order_direction == 'asc' else 2}",
         }
         query = urlencode(query_params, quote_via=quote)
 
