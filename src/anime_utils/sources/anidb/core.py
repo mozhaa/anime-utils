@@ -207,19 +207,19 @@ def _safe_int(s: str) -> Optional[int]:
 def get_main_info(text: str) -> AniDBMainInfo:
     selector = parsel.Selector(text=text)
 
-    main_title = selector.css("#tab_1_pane [itemprop='name']::text").get()
-    if main_title is None:
+    main_title = selector.css("#tab_1_pane [itemprop='name']::text").get("").strip()
+    if main_title == "":
         raise RuntimeError("main title not found")
 
-    type_ = "".join(selector.css("#tab_1_pane tr.type .value *::text").getall())
+    type_ = "".join(selector.css("#tab_1_pane tr.type .value *::text").getall()).strip()
     if type_ == "":
         raise RuntimeError("type not found")
 
-    year = "".join(selector.css("#tab_1_pane tr.year .value *::text").getall())
+    year = "".join(selector.css("#tab_1_pane tr.year .value *::text").getall()).strip()
     if year == "":
         raise RuntimeError("year not found")
 
-    season = "".join(selector.css("#tab_1_pane tr.season .value *::text").getall())
+    season = "".join(selector.css("#tab_1_pane tr.season .value *::text").getall()).strip()
     if season == "":
         raise RuntimeError("season not found")
 
@@ -241,10 +241,10 @@ def get_main_info(text: str) -> AniDBMainInfo:
     description = description.strip()
 
     return AniDBMainInfo(
-        main_title=main_title.strip(),
-        type_=type_.strip(),
-        year=year.strip(),
-        season=season.strip(),
+        main_title=main_title,
+        type_=type_,
+        year=year,
+        season=season,
         main_tags=main_tags,
         rating_value=rating_value,
         rating_vote_count=rating_vote_count,
