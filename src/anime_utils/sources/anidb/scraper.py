@@ -4,7 +4,7 @@ from urllib.parse import quote, urlencode
 
 from ..base import BaseClient
 from .core import get_characters, get_main_info, get_search_results, get_similar, get_tags
-from .types import AniDBCharacter, AniDBMainInfo, AniDBSimilarAnime, AniDBTags
+from .types import AniDBCharacter, AniDBMainInfo, AniDBSearchResult, AniDBSimilarAnime, AniDBTags
 
 
 class AniDBScraper(BaseClient):
@@ -78,7 +78,22 @@ class AniDBScraper(BaseClient):
         ctags_exclude: str = "",
         order_by: Literal["name", "rating", "average", "ucnt", "airdate", "enddate"] = "name",
         order_direction: Literal["asc", "desc"] = "asc",
-    ) -> None:
+    ) -> list[AniDBSearchResult]:
+        """Search for anime by tags on AniDB.
+
+        Args:
+            atags_include: Anime tags to include in search
+            atags_exclude: Anime tags to exclude from search
+            etags_include: Episode tags to include in search
+            etags_exclude: Episode tags to exclude from search
+            ctags_include: Character tags to include in search
+            ctags_exclude: Character tags to exclude from search
+            order_by: Field to sort results by (name, rating, average, ucnt, airdate, enddate)
+            order_direction: Sort direction (asc or desc)
+
+        Returns:
+            List of search results matching the tag criteria
+        """
         query_params = {
             "atags_include": atags_include,
             "atags_exclude": atags_exclude,
