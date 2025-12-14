@@ -1,9 +1,12 @@
+import logging
 from typing import Optional
 
 from aiohttp import ClientSession
 from aiolimiter import AsyncLimiter
 
 from .cache import FileCache
+
+logger = logging.getLogger(__name__)
 
 default_headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -20,8 +23,10 @@ class CachedHTTPClient:
     async def get(self, url: str, cache_key: Optional[str]) -> str:
         cached_data = await self.cache.get(cache_key)
         if cached_data is not None:
+            logger.info(f"cache hit, using HTML of size {len(cached_data)}")
             return cached_data.decode("utf-8")
 
+        logger.info("cache miss, requesting page...")
         async with self.limiter:
             async with self.session.get(url, headers=default_headers) as response:
                 response.raise_for_status()
