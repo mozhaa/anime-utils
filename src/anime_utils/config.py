@@ -1,27 +1,46 @@
-from dataclasses import dataclass
-from pathlib import Path
+from functools import cache
 from typing import Optional
 
-
-@dataclass
-class Config:
-    cache_dir: Path
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
 
 
-_config: Optional[Config] = None
+class RateLimitSettings(BaseSettings):
+    max_rate: int
+    time_period: int
 
 
-def configure(cache_dir: Path | str) -> None:
-    global _config
+class BaseClientSettings(BaseSettings):
+    cookies_file: Optional[str] = None
+    rate_limit: RateLimitSettings
 
-    if isinstance(cache_dir, str):
-        cache_dir = Path(cache_dir)
-
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    _config = Config(cache_dir=cache_dir)
+    model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 
 
-def get_config() -> Config:
-    if _config is None:
-        raise RuntimeError("Configuration not set. Call configure() first.")
-    return _config
+class AniDBScraperSettings(BaseClientSettings):
+    rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=10)
+
+
+class Settings(BaseSettings):
+    cache_dir: str = "~/.cache/anime-utils"
+    anidb_scraper_settings: AniDBScraperSettings
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            YamlConfigSettingsSource(settings_cls=settings_cls, yaml_file="anime-utils-config.yaml"),
+            env_settings,
+            file_secret_settings,
+        )
+
+
+@cache
+def get_settings() -> Settings:
+    return Settings()

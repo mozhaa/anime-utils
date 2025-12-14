@@ -1,6 +1,7 @@
-from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 from urllib.parse import quote, urlencode
+
+from anime_utils.config import get_settings
 
 from ..base import BaseClient
 from .core import get_characters, get_main_info, get_search_results, get_similar, get_tags
@@ -10,7 +11,11 @@ from .types import AniDBCharacter, AniDBMainInfo, AniDBSearchResult, AniDBSimila
 class AniDBScraper(BaseClient):
     """Client for scraping AniDB anime information."""
 
-    def __init__(self, cache_dir: Path, max_rate: int = 1, time_period: int = 2) -> None:
+    name = "anidb"
+
+    def __init__(
+        self, cache_dir: Optional[str] = None, max_rate: Optional[int] = None, time_period: Optional[int] = None
+    ) -> None:
         """Initialize the AniDB scraper.
 
         Args:
@@ -18,6 +23,13 @@ class AniDBScraper(BaseClient):
             max_rate: Maximum number of requests per time period
             time_period: Time period in seconds for rate limiting
         """
+        settings = get_settings()
+        if cache_dir is None:
+            cache_dir = settings.cache_dir
+        if max_rate is None:
+            max_rate = settings.anidb_scraper_settings.rate_limit.max_rate
+        if time_period is None:
+            time_period = settings.anidb_scraper_settings.rate_limit.time_period
         super().__init__(cache_dir, max_rate, time_period, base_url="https://anidb.net")
 
     async def get_tags(self, anime_id: str) -> AniDBTags:

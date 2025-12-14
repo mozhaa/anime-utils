@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class FileCache:
-    def __init__(self, cache_dir: Path) -> None:
-        self.cache_dir = cache_dir
+    def __init__(self, cache_dir: str) -> None:
+        self.cache_dir = Path(cache_dir).expanduser()
         self._ensure_cache_dir()
 
     def _ensure_cache_dir(self) -> None:

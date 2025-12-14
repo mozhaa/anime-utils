@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from aiohttp import ClientSession
 from aiolimiter import AsyncLimiter
 
@@ -8,7 +6,7 @@ from ..http import CachedHTTPClient, default_headers
 
 
 class BaseClient:
-    def __init__(self, cache_dir: Path, max_rate: int, time_period: int, base_url: str) -> None:
+    def __init__(self, cache_dir: str, max_rate: int, time_period: int, base_url: str) -> None:
         self.cache_dir = cache_dir
         self.max_rate = max_rate
         self.time_period = time_period
