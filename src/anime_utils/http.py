@@ -21,12 +21,14 @@ class CachedHTTPClient:
         self.limiter = limiter
 
     async def get(self, url: str, cache_key: Optional[str]) -> str:
-        cached_data = await self.cache.get(cache_key)
-        if cached_data is not None:
-            logger.info(f"cache hit, using HTML of size {len(cached_data)}")
-            return cached_data.decode("utf-8")
+        if cache_key is not None:
+            cached_data = await self.cache.get(cache_key)
+            if cached_data is not None:
+                logger.info(f"cache hit, using HTML of size {len(cached_data)}")
+                return cached_data.decode("utf-8")
+            logger.info("cache miss")
 
-        logger.info("cache miss, requesting page...")
+        logger.info("requesting page...")
         async with self.limiter:
             async with self.session.get(url, headers=default_headers) as response:
                 response.raise_for_status()
