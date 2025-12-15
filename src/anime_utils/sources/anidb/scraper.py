@@ -102,8 +102,7 @@ class AniDBScraper(BaseClient):
         order_by: Literal["name", "rating", "average", "ucnt", "airdate", "enddate"] = "name",
         order_direction: Literal["asc", "desc"] = "asc",
     ) -> list[AniDBSearchResult]:
-        """
-        Search for anime on AniDB using tag-based filtering.
+        """Search for anime on AniDB using tag-based filtering.
 
         AniDB categorizes tags into three distinct types:
         1. **Anime Tags**: Describe overall themes, genres, and features.
@@ -153,20 +152,20 @@ class AniDBScraper(BaseClient):
         any specified weight constraints will be ignored during search.
 
         Args:
-            atags_include (str): Anime tags to include (with optional weight constraints).
-            atags_exclude (str): Anime tags to exclude (with optional weight constraints).
-            etags_include (str): Episode tags to include (comma-separated).
-            etags_exclude (str): Episode tags to exclude (comma-separated).
-            ctags_include (str): Character tags to include (comma-separated).
-            ctags_exclude (str): Character tags to exclude (comma-separated).
-            order_by (str): Field to sort results by. Options:
+            atags_include: Anime tags to include (with optional weight constraints).
+            atags_exclude: Anime tags to exclude (with optional weight constraints).
+            etags_include: Episode tags to include (comma-separated).
+            etags_exclude: Episode tags to exclude (comma-separated).
+            ctags_include: Character tags to include (comma-separated).
+            ctags_exclude: Character tags to exclude (comma-separated).
+            order_by: Field to sort results by. Options:
                 - "name": Title
                 - "rating": AniDB rating
                 - "average": Weighted average
                 - "ucnt": User count
                 - "airdate": Start date
                 - "enddate": End date
-            order_direction (str): Sort direction. Either "asc" (ascending) or "desc" (descending).
+            order_direction: Sort direction. Either "asc" (ascending) or "desc" (descending).
 
         Returns:
             List of search results matching the tag criteria
