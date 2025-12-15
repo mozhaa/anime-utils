@@ -58,7 +58,7 @@ def parse_args() -> argparse.Namespace:
                     t_parser.add_argument(
                         param_name,
                         type=type_,
-                        required=True,
+                        required=not is_optional(type_),
                         choices=choices,
                         help=param["description"],
                     )
