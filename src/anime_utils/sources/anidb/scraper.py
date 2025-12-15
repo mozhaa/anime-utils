@@ -101,6 +101,7 @@ class AniDBScraper(HTTPClient):
         ctags_exclude: str = "",
         order_by: Literal["name", "rating", "average", "ucnt", "airdate", "enddate"] = "name",
         order_direction: Literal["asc", "desc"] = "asc",
+        limit: Optional[int] = None,
     ) -> list[AniDBSearchResult]:
         """Search for anime on AniDB using tag-based filtering.
 
@@ -166,6 +167,7 @@ class AniDBScraper(HTTPClient):
                 - "airdate": Start date
                 - "enddate": End date
             order_direction: Sort direction. Either "asc" (ascending) or "desc" (descending).
+            limit: Maximum number of search results in response.
 
         Returns:
             List of search results matching the tag criteria
@@ -199,4 +201,8 @@ class AniDBScraper(HTTPClient):
 
         # don't cache search results, since they're unlikely to appear twice
         text = await self._http_client.get(f"/anime/?{query}", None)
-        return get_search_results(text)
+
+        results = get_search_results(text)
+        if limit:
+            results = results[:limit]
+        return results
