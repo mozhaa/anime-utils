@@ -14,6 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 class BaseClient:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
+class HTTPClient(BaseClient):
     def __init__(
         self,
         cache_dir: str,

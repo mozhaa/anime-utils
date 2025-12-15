@@ -3,12 +3,12 @@ from urllib.parse import quote, urlencode
 
 from anime_utils.config import get_settings
 
-from ..base import BaseClient
+from ..base import HTTPClient
 from .core import get_characters, get_main_info, get_search_results, get_similar, get_tags
 from .types import AniDBCharacter, AniDBMainInfo, AniDBSearchResult, AniDBSimilarAnime, AniDBTags
 
 
-class AniDBScraper(BaseClient):
+class AniDBScraper(HTTPClient):
     """Client for scraping AniDB anime information."""
 
     name = "anidb"

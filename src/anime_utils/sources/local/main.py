@@ -2,11 +2,12 @@ from typing import Optional
 
 from anime_utils.config import get_settings
 
+from ..base import BaseClient
 from .anidb_xml import AniDBXMLSearchEngine
 from .types import SearchResult
 
 
-class LocalClient:
+class LocalClient(BaseClient):
     """Client for extracting data from local data sources."""
 
     name = "local"
@@ -26,7 +27,7 @@ class LocalClient:
             pickle_path = get_settings().local_settings.pickle_path
         self._engine = AniDBXMLSearchEngine(xml_path, pickle_path)
 
-    def search_by_title(self, query: str, limit: int = 10) -> list[SearchResult]:
+    async def search_by_title(self, query: str, limit: int = 10) -> list[SearchResult]:
         """Search anime by title (fuzzy matching with scores).
 
         Args:
