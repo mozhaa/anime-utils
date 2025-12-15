@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 from urllib.parse import quote, urlencode
 
 from anime_utils.config import get_settings
@@ -43,17 +43,32 @@ class AniDBScraper(HTTPClient):
             cookies_file = settings.anidb_scraper_settings.cookies_file
         super().__init__(cache_dir, max_rate, time_period, "https://anidb.net", socks_url, cookies_file)
 
-    async def get_tags(self, anime_id: str) -> AniDBTags:
+    async def get_tags(self, anime_id: str, with_descriptions: bool = False) -> AniDBTags:
         """Get tags for an anime from AniDB.
 
         Args:
             anime_id: The AniDB anime ID
+            with_descriptions: Write description for each tag
 
         Returns:
             List of tags for anime
         """
         text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
-        return get_tags(text)
+        tags = get_tags(text)
+        if not with_descriptions:
+
+            def remove_descriptions(obj: Any) -> None:
+                if isinstance(obj, list):
+                    for child in obj:
+                        remove_descriptions(child)
+                elif isinstance(obj, dict):
+                    if "description" in obj:
+                        obj.pop("description")
+                    for value in obj.values():
+                        remove_descriptions(value)
+
+            remove_descriptions(tags)
+        return tags
 
     async def get_main_info(self, anime_id: str) -> AniDBMainInfo:
         """Get main information for an anime from AniDB.
