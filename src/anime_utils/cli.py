@@ -1,6 +1,6 @@
 import argparse
 import logging
-from typing import Dict, Literal, get_args, get_origin
+from typing import Dict, Literal, Union, _type_repr, get_args, get_origin
 
 from .mcp import run as run_mcp
 from .registry import get_registry
@@ -70,7 +70,65 @@ def parse_args() -> argparse.Namespace:
     mcp_parser.add_argument("--port", type=int, default=8112, help="port to bind the MCP server to")
     mcp_parser.set_defaults(command="mcp")
 
+    print_registry_parser = subparsers.add_parser(name="print-registry", description="print available tools")
+    print_registry_parser.set_defaults(command="print_registry")
+
     return parser.parse_args()
+
+
+def is_optional(field: type) -> bool:
+    return get_origin(field) is Union and type(None) in get_args(field)
+
+
+def get_type_name(type_: type) -> str:
+    if get_origin(type_) is Literal:
+        type_ = get_args(type_)[0]
+        if not isinstance(type_, type):
+            type_ = type(type_)
+    return _type_repr(type_).replace("typing.", "")
+
+
+def print_registry() -> None:
+    registry = get_registry()
+
+    for client in registry:
+        print(f"# {client['name']}")
+        print(f"{client['description']}\n")
+
+        for tool in client["tools"]:
+            tool_name = f"{client['name']}_{tool['name']}"
+            print(f"## {tool_name}")
+            print(f"{tool['short_description']}\n")
+
+            if tool["long_description"]:
+                print(f"{tool['long_description']}\n")
+
+            if tool["parameters"]:
+                print("### Parameters:")
+                for param in tool["parameters"]:
+                    param_type = get_type_name(param["type_"])
+
+                    default = f" (default: {param['default']})" if param["default"] is not None else ""
+
+                    if param["default"] is None and not is_optional(param["type_"]):
+                        required = " (required)"
+                    else:
+                        required = ""
+
+                    description = param["description"]
+                    if "\n" in description:
+                        lines = description.split("\n")
+                        description = lines[0] + "\n" + "\n".join("  " + line for line in lines[1:])
+
+                    print(f"- `{param['name']}` [{param_type}]: {description} {default}{required}")
+                print()
+
+            if tool["examples"]:
+                print("### Examples:")
+                print(tool["examples"])
+                print()
+
+            print("---\n")
 
 
 def main() -> None:
@@ -79,8 +137,11 @@ def main() -> None:
     )
     args = parse_args()
 
-    if hasattr(args, "command") and args.command == "mcp":
-        run_mcp(args)
+    if hasattr(args, "command"):
+        if args.command == "mcp":
+            run_mcp(args)
+        elif args.command == "print_registry":
+            print_registry()
         return
 
     if not hasattr(args, "client") or not hasattr(args, "method_name"):
