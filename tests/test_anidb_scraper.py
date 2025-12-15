@@ -8,6 +8,7 @@ from anime_utils.sources.anidb.core import (
     get_characters,
     get_episode_tags,
     get_main_info,
+    get_search_results,
     get_similar,
 )
 from anime_utils.sources.anidb.types import AniDBAnimeTag, AniDBCharacter
@@ -16,6 +17,12 @@ from anime_utils.sources.anidb.types import AniDBAnimeTag, AniDBCharacter
 @pytest.fixture
 def page_html() -> str:
     with open("tests/resources/anidb_7286.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@pytest.fixture
+def search_results_html() -> str:
+    with open("tests/resources/search_results.html", "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -226,3 +233,114 @@ def test_get_similar(
             assert anime["approval_vote_count"] == approval_vote_count
             return
     pytest.fail(f"similar anime with name {name} was not found")
+
+
+@pytest.mark.parametrize(
+    "id_, title, type_, episodes, rating, rating_votes, average_rating, "
+    "average_rating_votes, members, aired_date, ended_date",
+    [
+        (24, ".hack//Sign", "TV Series", 26, 5.18, 7061, 7.11, 7201, 13921, "04.04.2002", "26.09.2002"),
+        (12876, "?", "Movie", 1, 2.21, 197, 4.18, 202, 365, "??.??.1932", "??.??.1932"),
+        (
+            19310,
+            '"Omae Gotoki ga Maou ni Kateru to Omou na" to Yuusha Party o Tsuihou Sareta node, '
+            "Outo de Kimama ni Kurashitai",
+            "TV Series",
+            None,
+            None,
+            0,
+            None,
+            0,
+            0,
+            "09.01.2026",
+            "-",
+        ),
+        (
+            3689,
+            '"Aesop" no Ohanashi yori: Ushi to Kaeru, Yokubatta Inu',
+            "Movie",
+            1,
+            None,
+            6,
+            None,
+            7,
+            62,
+            "21.03.1970",
+            "21.03.1970",
+        ),
+        (10143, '"0"', "Music Video", 1, 2.86, 240, 4.44, 242, 468, "23.10.2013", "23.10.2013"),
+        (
+            17129,
+            '"Anata o Hitokoto de Arawashite Kudasai" no Shitsumon ga Nigate da.',
+            "Web",
+            1,
+            5.55,
+            47,
+            5.77,
+            48,
+            118,
+            "12.01.2022",
+            "12.01.2022",
+        ),
+        (
+            17754,
+            "#Compass 2.0: Sentou Setsuri Kaiseki System",
+            "TV Series",
+            12,
+            1.90,
+            42,
+            4.32,
+            44,
+            366,
+            "08.04.2025",
+            "24.06.2025",
+        ),
+        (18901, '"Oshi no Ko" (2026)', "TV Series", None, None, 0, None, 0, 6, "14.01.2026", "-"),
+        (5391, ".hack//G.U. Returner", "OVA", 1, 3.98, 828, 6.20, 843, 2883, "??.07.2007", "??.07.2007"),
+        (
+            12936,
+            '"Eikou Naki Tensai-tachi" kara no Monogatari',
+            "TV Special",
+            2,
+            None,
+            5,
+            None,
+            7,
+            54,
+            "25.03.2017",
+            "28.05.2017",
+        ),
+    ],
+)
+def test_get_search_results(
+    search_results_html: str,
+    id_: int,
+    title: str,
+    type_: str,
+    episodes: Optional[int],
+    rating: Optional[float],
+    rating_votes: Optional[int],
+    average_rating: Optional[float],
+    average_rating_votes: Optional[int],
+    members: int,
+    aired_date: str,
+    ended_date: str,
+):
+    results = get_search_results(search_results_html)
+
+    assert len(results) == 30
+
+    for result in results:
+        if result["id_"] == id_:
+            assert result["title"] == title
+            assert result["type"] == type_
+            assert result["episodes"] == episodes
+            assert result["rating"] == rating
+            assert result["rating_votes"] == rating_votes
+            assert result["average_rating"] == average_rating
+            assert result["average_rating_votes"] == average_rating_votes
+            assert result["members"] == members
+            assert result["aired_date"] == aired_date
+            assert result["ended_date"] == ended_date
+            return
+    pytest.fail(f"search result with id {id_} was not found")
