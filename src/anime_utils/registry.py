@@ -58,7 +58,7 @@ def get_registry() -> list[Client]:
                         name=param.name,
                         description=help_texts.get(param.name, ""),
                         type_=param.annotation,
-                        default=param.default if not inspect.Parameter.empty else None,
+                        default=param.default if param.default is not inspect.Parameter.empty else None,
                     )
                 )
 
