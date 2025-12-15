@@ -2,6 +2,7 @@ import argparse
 import logging
 from typing import Dict, Literal, get_args, get_origin
 
+from .mcp import run as run_mcp
 from .registry import get_registry
 
 
@@ -57,6 +58,11 @@ def parse_args() -> argparse.Namespace:
 
             t_parser.set_defaults(client=client, method_name=tool["name"])
 
+    mcp_parser = subparsers.add_parser(name="mcp", description="anime-utils MCP server")
+    mcp_parser.add_argument("--host", type=str, default="0.0.0.0", help="host to bind the MCP server to")
+    mcp_parser.add_argument("--port", type=int, default=8112, help="port to bind the MCP server to")
+    mcp_parser.set_defaults(command="mcp")
+
     return parser.parse_args()
 
 
@@ -65,6 +71,10 @@ def main() -> None:
         level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s -- %(message)s", datefmt="%H:%M:%S"
     )
     args = parse_args()
+
+    if hasattr(args, "command") and args.command == "mcp":
+        run_mcp(args)
+        return
 
     if not hasattr(args, "client") or not hasattr(args, "method_name"):
         return

@@ -37,4 +37,3 @@ line-length = 120
 
 [project.scripts]
 anime-utils = "anime_utils.cli:main"
-anime-utils-mcp = "anime_utils.mcp:main"

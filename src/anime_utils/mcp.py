@@ -32,10 +32,13 @@ def run(args: argparse.Namespace) -> None:
 
     def create_tool_function(client_cls: type, method_name: str, func):
         sig = inspect.signature(func)
-        param_str = ", ".join(str(p) for p in sig.parameters.values() if p.name != "self")
+        parameters = [p for p in sig.parameters.values() if p.name != "self"]
+        param_definition = ", ".join(map(str, parameters))
+        param_str = ", ".join(p.name for p in parameters)
 
         function_code = f"""
-async def tool_function({param_str}) -> Any:
+from typing import *
+async def tool_function({param_definition}) -> Any:
     client = await client_manager.get_client(client_cls)
     method = getattr(client, method_name)
     return await method({param_str})
@@ -77,22 +80,3 @@ async def tool_function({param_str}) -> Any:
             await client_manager.close_all()
 
     asyncio.run(async_main())
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(prog="anime-utils-mcp", description="anime-utils MCP server")
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="host to bind the MCP server to (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=8112, help="port to bind the MCP server to (default: 8112)")
-    return parser.parse_args()
-
-
-def main() -> None:
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s -- %(message)s", datefmt="%H:%M:%S"
-    )
-    args = parse_args()
-    run(args)
-
-
-if __name__ == "__main__":
-    main()
