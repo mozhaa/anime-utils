@@ -16,7 +16,6 @@ class Parameter(TypedDict):
 
 class Tool(TypedDict):
     name: str
-    method_name: str
     description: str
     parameters: list[Parameter]
 
@@ -55,7 +54,7 @@ def get_registry() -> list[Client]:
 
                 params.append(
                     Parameter(
-                        name=f"--{param.name.replace('_', '-')}",
+                        name=param.name,
                         description=help_texts.get(param.name, ""),
                         type_=param.annotation,
                         default=param.default if not inspect.Parameter.empty else None,
@@ -64,8 +63,7 @@ def get_registry() -> list[Client]:
 
             tools.append(
                 Tool(
-                    name=name.replace("_", "-"),
-                    method_name=name,
+                    name=name,
                     description=parsed_doc.short_description,
                     parameters=params,
                 )

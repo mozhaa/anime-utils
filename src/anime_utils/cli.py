@@ -17,16 +17,25 @@ def parse_args() -> argparse.Namespace:
         c_subparsers = c_parser.add_subparsers()
 
         for tool in client["tools"]:
-            t_parser = c_subparsers.add_parser(name=tool["name"], description=tool["description"])
+            t_parser = c_subparsers.add_parser(name=tool["name"].replace("_", "-"), description=tool["description"])
             for param in tool["parameters"]:
+                param_name = f"--{param['name'].replace('_', '-')}"
                 if param["default"] is not None:
                     t_parser.add_argument(
-                        param["name"], type=param["type_"], default=param["default"], help=param["description"]
+                        param_name,
+                        type=param["type_"],
+                        default=param["default"],
+                        help=param["description"],
                     )
                 else:
-                    t_parser.add_argument(param["name"], type=param["type_"], required=True, help=param["description"])
+                    t_parser.add_argument(
+                        param_name,
+                        type=param["type_"],
+                        required=True,
+                        help=param["description"],
+                    )
 
-            t_parser.set_defaults(client=client, method_name=tool["method_name"])
+            t_parser.set_defaults(client=client, method_name=tool["name"])
 
     return parser.parse_args()
 
