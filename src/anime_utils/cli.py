@@ -11,6 +11,7 @@ class RawTextArgumentDefaultsHelpFormatter(argparse.RawTextHelpFormatter, argpar
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="anime-utils")
+    parser.add_argument("--no-pretty-print", action="store_true", help="minify JSON in the output")
     subparsers = parser.add_subparsers()
 
     for client in get_registry():
@@ -87,7 +88,11 @@ def main() -> None:
 
         async with client:
             result = await method(**method_args)
-            print(json.dumps(result))
+            if args.no_pretty_print:
+                output = json.dumps(result)
+            else:
+                output = json.dumps(result, indent=2)
+            print(output)
 
     asyncio.run(run())
 
