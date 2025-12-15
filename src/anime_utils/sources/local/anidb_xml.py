@@ -18,9 +18,9 @@ class AniDBXMLSearchEngine:
 
         if pickle_path is not None:
             try:
-                logger.info(f"trying to load from pickle file {pickle_path}")
                 with Path(pickle_path).expanduser().resolve().open("rb") as f:
                     self.anime_list, self.anime_titles = pickle.load(f)
+                    logger.info(f"loaded from pickle file {pickle_path}")
                     return
             except FileNotFoundError:
                 logger.info("pickle file does not exist yet")
