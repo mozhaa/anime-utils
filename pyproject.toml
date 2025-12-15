@@ -11,6 +11,7 @@ dependencies = [
     "aiohttp-socks>=0.11.0",
     "aiolimiter>=1.2.1",
     "docstring-parser>=0.17.0",
+    "fastmcp>=2.14.1",
     "parsel>=1.10.0",
     "pydantic-settings[yaml]>=2.12.0",
 ]
@@ -36,3 +37,4 @@ line-length = 120
 
 [project.scripts]
 anime-utils = "anime_utils.cli:main"
+anime-utils-mcp = "anime_utils.mcp:main"
