@@ -74,7 +74,7 @@ class AniDBSearchResult(TypedDict):
     id_: int
     title: str
     type: str
-    episodes: int
+    episodes: Optional[int]
     rating: Optional[float]
     rating_votes: Optional[int]
     average_rating: Optional[float]

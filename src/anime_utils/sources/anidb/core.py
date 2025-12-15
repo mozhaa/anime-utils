@@ -403,7 +403,7 @@ def get_search_results(text: str) -> list[str]:
         episodes = element.css('td[data-label="Eps"]::text').get()
         if episodes is None:
             raise RuntimeError(f"failed to get episodes from {element.get()}")
-        episodes = int(episodes.strip())
+        episodes = _safe_int(episodes)
 
         members = element.css('td[data-label="User"]::text').get()
         if members is None:
