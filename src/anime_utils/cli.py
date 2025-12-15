@@ -39,7 +39,14 @@ def parse_args() -> argparse.Namespace:
                     choices = list(get_args(type_))
                     type_ = str
 
-                if param["default"] is not None:
+                if type_ is bool:
+                    if param["default"] is True:
+                        raise RuntimeError(
+                            "bool arguments with default value False are not supported "
+                            f"({client['name']}.{tool['name']}.{param['name']})"
+                        )
+                    t_parser.add_argument(param_name, action="store_true", help=param["description"])
+                elif param["default"] is not None:
                     t_parser.add_argument(
                         param_name,
                         type=type_,
