@@ -367,19 +367,24 @@ def get_similar(text: str) -> list[AniDBSimilarAnime]:
 
 
 def _parse_rating_and_votes(text: str) -> tuple[Optional[float], Optional[int]]:
-    if not text or "N/A" in text.upper():
+    if not text:
         return None, None
 
-    match = re.search(r"(\d+\.\d+)\s*\((\d+)\)", text)
-    if not match:
-        return None, None
+    m = re.search(r"\((\d+)\)", text)
+    if m is None:
+        votes = None
+    else:
+        votes = int(m.group(1))
 
-    rating = float(match.group(1))
-    votes = int(match.group(2))
+    if "N/A" in text:
+        rating = None
+    else:
+        rating = float(text.split(" ")[0])
+
     return rating, votes
 
 
-def get_search_results(text: str) -> list[str]:
+def get_search_results(text: str) -> list[AniDBSearchResult]:
     selector = parsel.Selector(text=text)
 
     results: list[AniDBSearchResult] = []
@@ -400,10 +405,10 @@ def get_search_results(text: str) -> list[str]:
             raise RuntimeError(f"failed to get type from {element.get()}")
         type_ = type_.strip()
 
-        episodes = element.css('td[data-label="Eps"]::text').get()
-        if episodes is None:
+        episodes_text = "".join(element.css('td[data-label="Eps"] *::text').getall())
+        if episodes_text == "":
             raise RuntimeError(f"failed to get episodes from {element.get()}")
-        episodes = _safe_int(episodes)
+        episodes = _safe_int(episodes_text)
 
         members = element.css('td[data-label="User"]::text').get()
         if members is None:
@@ -441,3 +446,5 @@ def get_search_results(text: str) -> list[str]:
                 ended_date=ended_date,
             )
         )
+
+    return results
