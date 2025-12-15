@@ -28,7 +28,7 @@ class CachedHTTPClient:
                 return cached_data.decode("utf-8")
             logger.info("cache miss")
 
-        logger.info("requesting page...")
+        logger.info(f"requesting page {url}")
         async with self.limiter:
             async with self.session.get(url, headers=default_headers) as response:
                 response.raise_for_status()
