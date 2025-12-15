@@ -1,66 +1,47 @@
 import argparse
 import asyncio
 import inspect
+import json
 import logging
 from typing import Dict
 
-import docstring_parser
-
-from .sources.anidb.scraper import AniDBScraper
+from .registry import get_registry
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="anime-utils")
     subparsers = parser.add_subparsers()
 
-    clients = [AniDBScraper]
-
-    for client in clients:
-        c_parser = subparsers.add_parser(name=client.name, description=inspect.getdoc(client))
+    for client in get_registry():
+        c_parser = subparsers.add_parser(name=client["name"], description=client["description"])
         c_subparsers = c_parser.add_subparsers()
 
-        for name, func in inspect.getmembers(AniDBScraper, inspect.isfunction):
-            if name.startswith("__"):
-                continue
-
-            docstring = inspect.getdoc(func)
-            description = ""
-            help_texts: Dict[str, str] = {}
-
-            if docstring:
-                parsed_doc = docstring_parser.parse(docstring)
-                description = parsed_doc.short_description or ""
-
-                for param in parsed_doc.params:
-                    help_texts[param.arg_name] = param.description or ""
-
-            t_parser = c_subparsers.add_parser(name=name.replace("_", "-"), description=description)
-            for param in inspect.signature(func).parameters.values():
-                if param.name == "self":
-                    continue
-
-                arg_name = f"--{param.name.replace('_', '-')}"
-                help_text = help_texts.get(param.name, "")
-
-                if param.default != inspect.Parameter.empty:
-                    t_parser.add_argument(arg_name, type=param.annotation, default=param.default, help=help_text)
+        for tool in client["tools"]:
+            t_parser = c_subparsers.add_parser(name=tool["name"], description=tool["description"])
+            for param in tool["parameters"]:
+                if param["default"] is not None:
+                    t_parser.add_argument(
+                        param["name"], type=param["type_"], default=param["default"], help=param["description"]
+                    )
                 else:
-                    t_parser.add_argument(arg_name, type=param.annotation, required=True, help=help_text)
+                    t_parser.add_argument(param["name"], type=param["type_"], required=True, help=param["description"])
 
-            t_parser.set_defaults(client=client, method_name=name)
+            t_parser.set_defaults(client=client, method_name=tool["method_name"])
 
     return parser.parse_args()
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s -- %(message)s", datefmt="%H:%M:%S"
+    )
     args = parse_args()
 
     if not hasattr(args, "client") or not hasattr(args, "method_name"):
         return
 
-    async def run_client():
-        client = args.client()
+    async def run():
+        client = args.client["cls"]()
         method_name = args.method_name
         method = getattr(client, method_name)
         method_args: Dict[str, str] = {}
@@ -74,9 +55,9 @@ def main() -> None:
 
         async with client:
             result = await method(**method_args)
-            print(result)
+            print(json.dumps(result))
 
-    asyncio.run(run_client())
+    asyncio.run(run())
 
 
 if __name__ == "__main__":
