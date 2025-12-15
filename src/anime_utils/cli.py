@@ -1,11 +1,12 @@
 import argparse
-import asyncio
-import inspect
-import json
 import logging
 from typing import Dict, Literal, get_args, get_origin
 
 from .registry import get_registry
+
+
+class RawTextArgumentDefaultsHelpFormatter(argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter):
+    pass
 
 
 def parse_args() -> argparse.Namespace:
@@ -17,7 +18,16 @@ def parse_args() -> argparse.Namespace:
         c_subparsers = c_parser.add_subparsers()
 
         for tool in client["tools"]:
-            t_parser = c_subparsers.add_parser(name=tool["name"].replace("_", "-"), description=tool["description"])
+            help_text = tool["long_description"]
+            if tool["examples"]:
+                help_text += "\n\nExamples:\n" + tool["examples"]
+
+            t_parser = c_subparsers.add_parser(
+                name=tool["name"].replace("_", "-"),
+                description=tool["short_description"],
+                epilog=help_text,
+                formatter_class=RawTextArgumentDefaultsHelpFormatter,
+            )
             for param in tool["parameters"]:
                 param_name = f"--{param['name'].replace('_', '-')}"
 
@@ -57,6 +67,10 @@ def main() -> None:
 
     if not hasattr(args, "client") or not hasattr(args, "method_name"):
         return
+
+    import asyncio
+    import inspect
+    import json
 
     async def run():
         client = args.client["cls"]()

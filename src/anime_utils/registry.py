@@ -17,9 +17,10 @@ class Parameter(TypedDict):
 
 class Tool(TypedDict):
     name: str
-    description: str
+    short_description: str
+    long_description: str
+    examples: str
     parameters: list[Parameter]
-    parameter_names: list[str]
 
 
 class Client(TypedDict):
@@ -63,13 +64,15 @@ def get_registry() -> list[Client]:
                     )
                 )
 
-            param_names = [param.name for param in inspect.signature(func).parameters.values() if param.name != "self"]
+            examples = "\n".join(example.description for example in parsed_doc.examples) if parsed_doc.examples else ""
+
             tools.append(
                 Tool(
                     name=name,
-                    description=parsed_doc.short_description,
+                    short_description=parsed_doc.short_description or "",
+                    long_description=parsed_doc.long_description or "",
+                    examples=examples,
                     parameters=params,
-                    parameter_names=param_names,
                 )
             )
         registry.append(

@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 def run(args: argparse.Namespace) -> None:
     import asyncio
+    import inspect
 
     from fastmcp import FastMCP
 
@@ -29,8 +30,9 @@ def run(args: argparse.Namespace) -> None:
 
     client_manager = ClientManager()
 
-    def create_tool_function(client_cls: type, method_name: str, parameter_names: list[str]):
-        param_str = ", ".join(parameter_names)
+    def create_tool_function(client_cls: type, method_name: str, func):
+        sig = inspect.signature(func)
+        param_str = ", ".join(str(p) for p in sig.parameters.values() if p.name != "self")
 
         function_code = f"""
 async def tool_function({param_str}) -> Any:
@@ -54,8 +56,16 @@ async def tool_function({param_str}) -> Any:
                 tool_name = f"{client['name']}_{tool['name']}"
                 method_name = tool["name"]
 
-                tool_function = create_tool_function(client["cls"], method_name, tool["parameter_names"])
-                mcp.tool(tool_function, name=tool_name, description=tool["description"])
+                func = getattr(client["cls"], tool["name"])
+                tool_function = create_tool_function(client["cls"], method_name, func)
+
+                full_description = tool["short_description"]
+                if tool["long_description"]:
+                    full_description += "\n\n" + tool["long_description"]
+                if tool["examples"]:
+                    full_description += "\n\nExamples:\n" + tool["examples"]
+
+                mcp.tool(tool_function, name=tool_name, description=full_description)
 
     mcp = FastMCP("anime-utils")
     setup_mcp_tools(mcp)
