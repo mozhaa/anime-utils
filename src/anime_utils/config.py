@@ -21,9 +21,15 @@ class AniDBScraperSettings(BaseClientSettings):
     rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=10)
 
 
+class LocalSettings(BaseSettings):
+    xml_path: Optional[str] = None
+    pickle_path: Optional[str] = None
+
+
 class Settings(BaseSettings):
     cache_dir: str = "~/.cache/anime-utils"
     anidb_scraper_settings: AniDBScraperSettings
+    local_settings: LocalSettings
 
     @classmethod
     def settings_customise_sources(
