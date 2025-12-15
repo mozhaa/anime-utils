@@ -26,7 +26,7 @@ def build(path: Path, previous_paths: list[Path]) -> str:
         if not new_path.is_absolute():
             new_path = path.parent / new_path
         new_text = build(new_path, previous_paths=[*previous_paths, path])
-        text = text[:m.span()[0] + offset] + new_text + text[m.span()[1] + offset:]
+        text = text[: m.span()[0] + offset] + new_text + text[m.span()[1] + offset :]
         offset += len(new_text) - m.span()[1] + m.span()[0]
 
     return text
