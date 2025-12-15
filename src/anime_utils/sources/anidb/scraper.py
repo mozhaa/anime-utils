@@ -1,3 +1,5 @@
+import hashlib
+import json
 from typing import Any, Literal, Optional
 from urllib.parse import quote, urlencode
 
@@ -214,8 +216,8 @@ class AniDBScraper(HTTPClient):
         query_params = {k: v for k, v in query_params.items() if v != ""}
         query = urlencode(query_params, quote_via=quote)
 
-        # don't cache search results, since they're unlikely to appear twice
-        text = await self._http_client.get(f"/anime/?{query}", None)
+        cache_key = "anidb-search-" + hashlib.sha256(json.dumps(query_params, sort_keys=True).encode()).hexdigest()[:16]
+        text = await self._http_client.get(f"/anime/?{query}", cache_key)
 
         results = get_search_results(text)
         if limit:
