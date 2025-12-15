@@ -175,7 +175,7 @@ class AniDBScraper(BaseClient):
             >>> search_by_tags(ctags_include="yandere", atags_exclude="nudity")
 
             >>> # Find high-action, low-tragedy anime
-            >>> search_by_tags(atags_include="action min(**)", atags_exclude="tragedy min(*)")
+            >>> search_by_tags(atags_include="action min(**)", atags_exclude="tragedy max(*)")
 
             >>> # Find anime with male protagonist and school setting
             >>> search_by_tags(atags_include="male protagonist, school")
