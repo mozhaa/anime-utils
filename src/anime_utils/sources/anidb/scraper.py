@@ -98,20 +98,87 @@ class AniDBScraper(BaseClient):
         order_by: Literal["name", "rating", "average", "ucnt", "airdate", "enddate"] = "name",
         order_direction: Literal["asc", "desc"] = "asc",
     ) -> list[AniDBSearchResult]:
-        """Search for anime by tags on AniDB.
+        """
+        Search for anime on AniDB using tag-based filtering.
+
+        AniDB categorizes tags into three distinct types:
+        1. **Anime Tags**: Describe overall themes, genres, and features.
+        - Range from general (action, comedy) to specific (cyberpunk, parental abandonment).
+        - Most anime tags have a weight (0.5-3 stars) indicating relevance, but some tags
+            (e.g., "male protagonist") are weightless and treated as boolean flags.
+        2. **Episode Tags**: Describe events in specific episodes.
+        - Examples: "amusement park visit", "furo scene".
+        - No weight system - treated as present/absent.
+        3. **Character Tags**: Describe character attributes or tropes.
+        - Examples: "glasses", "yandere", "school uniform".
+        - No weight system - treated as present/absent.
+
+        WEIGHT SYSTEM (Anime Tags Only):
+        Anime tags use a star rating system to indicate relevance weight:
+            +      : 0.5 stars (equivalent to 100 in numeric form)
+            *      : 1 star    (equivalent to 200 in numeric form)
+            *+     : 1.5 stars (equivalent to 300 in numeric form)
+            **     : 2 stars   (equivalent to 400 in numeric form)
+            **+    : 2.5 stars (equivalent to 500 in numeric form)
+            ***    : 3 stars   (equivalent to 600 in numeric form)
+
+        Note: Some anime tags are weightless (e.g., "male protagonist") and are treated as
+            boolean flags. For these tags, weight constraints are ignored.
+
+        Background: Internally, AniDB represents weights numerically (0, 100, 200, 300, 400,
+        500, 600) corresponding to (0, 0.5, 1, 1.5, 2, 2.5, 3) stars respectively. While this
+        method uses the star notation, other parts of the system may use the numeric format.
+
+        Note: Access to adult (hentai) anime content requires authentication via AniDB cookies.
+        Set the `cookies_file` configuration variable to the path of your cookies file
+        to enable searching for adult-rated content.
+
+        SEARCH SYNTAX:
+        - Basic inclusion/exclusion: Provide comma-separated tag names.
+        Example: etags_include="pool episode, furo scene"
+
+        - Weight constraints for anime tags: Use min()/max() operators.
+        Format: "tag_name min(weight)", "tag_name max(weight)"
+        Examples:
+            "action max(*)"      : Action tag with ≤1 star (or absent)
+            "nudity min(*+)"     : Nudity tag with ≥1.5 stars
+            "nudity min(+), nudity max(*+)" : Nudity tag between 0.5-1.5 stars
+            "male protagonist"   : Weightless tag (weight constraints ignored)
+
+        Note: Multiple constraints for the same tag are allowed. For weightless tags,
+        any specified weight constraints will be ignored during search.
 
         Args:
-            atags_include: Anime tags to include in search
-            atags_exclude: Anime tags to exclude from search
-            etags_include: Episode tags to include in search
-            etags_exclude: Episode tags to exclude from search
-            ctags_include: Character tags to include in search
-            ctags_exclude: Character tags to exclude from search
-            order_by: Field to sort results by (name, rating, average, ucnt, airdate, enddate)
-            order_direction: Sort direction (asc or desc)
+            atags_include (str): Anime tags to include (with optional weight constraints).
+            atags_exclude (str): Anime tags to exclude (with optional weight constraints).
+            etags_include (str): Episode tags to include (comma-separated).
+            etags_exclude (str): Episode tags to exclude (comma-separated).
+            ctags_include (str): Character tags to include (comma-separated).
+            ctags_exclude (str): Character tags to exclude (comma-separated).
+            order_by (str): Field to sort results by. Options:
+                - "name": Title
+                - "rating": AniDB rating
+                - "average": Weighted average
+                - "ucnt": User count
+                - "airdate": Start date
+                - "enddate": End date
+            order_direction (str): Sort direction. Either "asc" (ascending) or "desc" (descending).
 
         Returns:
             List of search results matching the tag criteria
+
+        Examples:
+            >>> # Find anime with yandere characters without explicit nudity
+            >>> search_by_tags(ctags_include="yandere", atags_exclude="nudity")
+
+            >>> # Find high-action, low-tragedy anime
+            >>> search_by_tags(atags_include="action min(**)", atags_exclude="tragedy min(*)")
+
+            >>> # Find anime with male protagonist and school setting
+            >>> search_by_tags(atags_include="male protagonist, school")
+
+            >>> # Find anime with beach episodes, ordered by rating
+            >>> search_by_tags(etags_include="beach episode", order_by="rating", order_direction="desc")
         """
         query_params = {
             "atags_include": atags_include,
