@@ -71,6 +71,7 @@ def parse_args() -> argparse.Namespace:
     mcp_parser.set_defaults(command="mcp")
 
     print_registry_parser = subparsers.add_parser(name="print-registry", description="print available tools")
+    print_registry_parser.add_argument("-H", type=int, default=1, help="root header size")
     print_registry_parser.set_defaults(command="print_registry")
 
     return parser.parse_args()
@@ -88,23 +89,21 @@ def get_type_name(type_: type) -> str:
     return _type_repr(type_).replace("typing.", "")
 
 
-def print_registry() -> None:
+def print_registry(args: argparse.Namespace) -> None:
     registry = get_registry()
+    header_prefix = (args.H - 1) * "#"
 
     for client in registry:
-        print(f"# {client['name']}")
-        print(f"{client['description']}\n")
-
         for tool in client["tools"]:
             tool_name = f"{client['name']}_{tool['name']}"
-            print(f"## {tool_name}")
+            print(header_prefix + f"# {tool_name}")
             print(f"{tool['short_description']}\n")
 
             if tool["long_description"]:
                 print(f"{tool['long_description']}\n")
 
             if tool["parameters"]:
-                print("### Parameters:")
+                print(header_prefix + "## Parameters:")
                 for param in tool["parameters"]:
                     param_type = get_type_name(param["type_"])
 
@@ -124,7 +123,7 @@ def print_registry() -> None:
                 print()
 
             if tool["examples"]:
-                print("### Examples:")
+                print(header_prefix + "## Examples:")
                 print(tool["examples"])
                 print()
 
@@ -141,7 +140,7 @@ def main() -> None:
         if args.command == "mcp":
             run_mcp(args)
         elif args.command == "print_registry":
-            print_registry()
+            print_registry(args)
         return
 
     if not hasattr(args, "client") or not hasattr(args, "method_name"):
