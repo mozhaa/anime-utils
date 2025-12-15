@@ -19,6 +19,7 @@ class AniDBScraper(BaseClient):
         max_rate: Optional[int] = None,
         time_period: Optional[int] = None,
         socks_url: Optional[str] = None,
+        cookies_file: Optional[str] = None,
     ) -> None:
         """Initialize the AniDB scraper.
 
@@ -27,6 +28,7 @@ class AniDBScraper(BaseClient):
             max_rate: Maximum number of requests per time period
             time_period: Time period in seconds for rate limiting
             socks_url: SOCKS proxy URL
+            cookies_file: Path to cookies file for session persistence
         """
         settings = get_settings()
         if cache_dir is None:
@@ -37,7 +39,9 @@ class AniDBScraper(BaseClient):
             time_period = settings.anidb_scraper_settings.rate_limit.time_period
         if socks_url is None:
             socks_url = settings.anidb_scraper_settings.socks_url
-        super().__init__(cache_dir, max_rate, time_period, "https://anidb.net", socks_url)
+        if cookies_file is None:
+            cookies_file = settings.anidb_scraper_settings.cookies_file
+        super().__init__(cache_dir, max_rate, time_period, "https://anidb.net", socks_url, cookies_file)
 
     async def get_tags(self, anime_id: str) -> AniDBTags:
         """Get tags for an anime from AniDB.
@@ -181,14 +185,17 @@ class AniDBScraper(BaseClient):
             >>> search_by_tags(etags_include="beach episode", order_by="rating", order_direction="desc")
         """
         query_params = {
-            "atags_include": atags_include,
-            "atags_exclude": atags_exclude,
-            "etags_include": etags_include,
-            "etags_exclude": etags_exclude,
-            "ctags_include": ctags_include,
-            "ctags_exclude": ctags_exclude,
+            "atags.include": atags_include,
+            "atags.exclude": atags_exclude,
+            "etags.include": etags_include,
+            "etags.exclude": etags_exclude,
+            "ctags.include": ctags_include,
+            "ctags.exclude": ctags_exclude,
             f"orderby.{order_by}": f"0.{1 if order_direction == 'asc' else 2}",
+            "do.update": "Search",
+            "noalias": 1,
         }
+        query_params = {k: v for k, v in query_params.items() if v != ""}
         query = urlencode(query_params, quote_via=quote)
 
         # don't cache search results, since they're unlikely to appear twice
