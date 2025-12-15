@@ -38,6 +38,8 @@ def parse_args() -> argparse.Namespace:
                 if get_origin(type_) is Literal:
                     choices = list(get_args(type_))
                     type_ = str
+                elif get_origin(type_) is Union:
+                    type_ = get_args(type_)[0]
 
                 if type_ is bool:
                     if param["default"] is True:
@@ -58,7 +60,7 @@ def parse_args() -> argparse.Namespace:
                     t_parser.add_argument(
                         param_name,
                         type=type_,
-                        required=not is_optional(type_),
+                        required=not is_optional(param["type_"]),
                         choices=choices,
                         help=param["description"],
                     )
