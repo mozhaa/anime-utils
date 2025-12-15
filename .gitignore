@@ -16,3 +16,8 @@ examples/
 *.ipynb
 *cookies*
 anime-utils-config.yaml
+prompt/
+.roomodes
+anime-titles.xml
+anime-titles.bin
+
