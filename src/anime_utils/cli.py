@@ -3,7 +3,7 @@ import asyncio
 import inspect
 import json
 import logging
-from typing import Dict
+from typing import Dict, Literal, get_args, get_origin
 
 from .registry import get_registry
 
@@ -20,18 +20,27 @@ def parse_args() -> argparse.Namespace:
             t_parser = c_subparsers.add_parser(name=tool["name"].replace("_", "-"), description=tool["description"])
             for param in tool["parameters"]:
                 param_name = f"--{param['name'].replace('_', '-')}"
+
+                type_ = param["type_"]
+                choices = None
+                if get_origin(type_) is Literal:
+                    choices = list(get_args(type_))
+                    type_ = str
+
                 if param["default"] is not None:
                     t_parser.add_argument(
                         param_name,
-                        type=param["type_"],
+                        type=type_,
                         default=param["default"],
+                        choices=choices,
                         help=param["description"],
                     )
                 else:
                     t_parser.add_argument(
                         param_name,
-                        type=param["type_"],
+                        type=type_,
                         required=True,
+                        choices=choices,
                         help=param["description"],
                     )
 
