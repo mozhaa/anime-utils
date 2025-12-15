@@ -3,8 +3,9 @@ from typing import Any, TypedDict
 
 import docstring_parser
 
-from .sources.anidb.scraper import AniDBScraper
+from .sources.anidb import AniDBScraper
 from .sources.base import BaseClient
+from .sources.local import LocalClient
 
 
 class Parameter(TypedDict):
@@ -28,7 +29,7 @@ class Client(TypedDict):
     tools: list[Tool]
 
 
-clients = [AniDBScraper]
+clients = [AniDBScraper, LocalClient]
 
 
 def get_registry() -> list[Client]:
