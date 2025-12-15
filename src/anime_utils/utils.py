@@ -17,3 +17,6 @@ class AioCookieJar(MozillaCookieJar):
 
     def update_cookies(self, cookies, response_url=None):
         pass
+
+    def update_cookies_from_headers(self, *args, **kwargs):
+        pass
