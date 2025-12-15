@@ -19,7 +19,7 @@ class AniDBXMLSearchEngine:
         if pickle_path is not None:
             try:
                 logger.info(f"trying to load from pickle file {pickle_path}")
-                with Path(pickle_path).expanduser().open("rb") as f:
+                with Path(pickle_path).expanduser().resolve().open("rb") as f:
                     self.anime_list, self.anime_titles = pickle.load(f)
                     return
             except FileNotFoundError:
@@ -51,9 +51,9 @@ class AniDBXMLSearchEngine:
 
         if pickle_path is not None:
             logger.info(f"saving data to pickle file {pickle_path}")
-            path = Path(pickle_path).expanduser()
-            path.mkdir(parents=True, exist_ok=True)
-            with path.open("wb") as f:
+            path = Path(pickle_path).expanduser().resolve()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("wb+") as f:
                 pickle.dump((self.anime_list, self.anime_titles), f)
 
     def search(self, query: str, limit: int = 10) -> list[SearchResult]:
