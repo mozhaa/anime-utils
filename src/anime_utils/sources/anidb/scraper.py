@@ -45,7 +45,7 @@ class AniDBScraper(HTTPClient):
             cookies_file = settings.anidb_scraper_settings.cookies_file
         super().__init__(cache_dir, max_rate, time_period, "https://anidb.net", socks_url, cookies_file)
 
-    async def get_tags(self, anime_id: str, with_descriptions: bool = False) -> AniDBTags:
+    async def get_tags(self, anime_id: int, with_descriptions: bool = False) -> AniDBTags:
         """Get tags for an anime from AniDB.
 
         Args:
@@ -72,7 +72,7 @@ class AniDBScraper(HTTPClient):
             remove_descriptions(tags)
         return tags
 
-    async def get_main_info(self, anime_id: str) -> AniDBMainInfo:
+    async def get_main_info(self, anime_id: int) -> AniDBMainInfo:
         """Get main information for an anime from AniDB.
 
         Args:
@@ -84,7 +84,7 @@ class AniDBScraper(HTTPClient):
         text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
         return get_main_info(text)
 
-    async def get_characters(self, anime_id: str) -> list[AniDBCharacter]:
+    async def get_characters(self, anime_id: int) -> list[AniDBCharacter]:
         """Get character information for an anime from AniDB.
 
         Args:
@@ -96,7 +96,7 @@ class AniDBScraper(HTTPClient):
         text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
         return get_characters(text)
 
-    async def get_similar(self, anime_id: str) -> list[AniDBSimilarAnime]:
+    async def get_similar(self, anime_id: int) -> list[AniDBSimilarAnime]:
         """Get similar anime recommendations from AniDB.
 
         Args:
