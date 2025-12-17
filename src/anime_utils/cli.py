@@ -2,8 +2,8 @@ import argparse
 import logging
 from typing import Dict, Literal, Union, _type_repr, get_args, get_origin
 
-from .mcp import run as run_mcp
-from .registry import get_registry
+from anime_utils.mcp import run as run_mcp
+from anime_utils.registry import get_registry
 
 
 class RawTextArgumentDefaultsHelpFormatter(argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter):

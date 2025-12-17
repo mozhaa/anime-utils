@@ -4,7 +4,7 @@ from typing import Optional
 
 import parsel
 
-from .types import (
+from anime_utils.clients.anidb.types import (
     AniDBAnimeTag,
     AniDBCharacter,
     AniDBCharacterTag,

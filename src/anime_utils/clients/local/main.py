@@ -1,10 +1,9 @@
 from typing import Optional
 
+from anime_utils.clients.base import BaseClient
+from anime_utils.clients.local.anidb_xml import AniDBXMLSearchEngine
+from anime_utils.clients.local.types import SearchResult
 from anime_utils.config import get_settings
-
-from ..base import BaseClient
-from .anidb_xml import AniDBXMLSearchEngine
-from .types import SearchResult
 
 
 class LocalClient(BaseClient):

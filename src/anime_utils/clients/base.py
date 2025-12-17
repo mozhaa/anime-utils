@@ -5,10 +5,9 @@ from typing import Optional
 import aiohttp
 from aiolimiter import AsyncLimiter
 
+from anime_utils.cache import FileCache
+from anime_utils.http import CachedHTTPClient, default_headers
 from anime_utils.utils import AioCookieJar
-
-from ..cache import FileCache
-from ..http import CachedHTTPClient, default_headers
 
 logger = logging.getLogger(__name__)
 

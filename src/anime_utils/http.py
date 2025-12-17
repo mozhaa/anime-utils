@@ -4,7 +4,7 @@ from typing import Optional
 from aiohttp import ClientSession
 from aiolimiter import AsyncLimiter
 
-from .cache import FileCache
+from anime_utils.cache import FileCache
 
 logger = logging.getLogger(__name__)
 

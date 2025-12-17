@@ -3,11 +3,16 @@ import json
 from typing import Any, Literal, Optional
 from urllib.parse import quote, urlencode
 
+from anime_utils.clients.anidb.core import get_characters, get_main_info, get_search_results, get_similar, get_tags
+from anime_utils.clients.anidb.types import (
+    AniDBCharacter,
+    AniDBMainInfo,
+    AniDBSearchResult,
+    AniDBSimilarAnime,
+    AniDBTags,
+)
+from anime_utils.clients.base import HTTPClient
 from anime_utils.config import get_settings
-
-from ..base import HTTPClient
-from .core import get_characters, get_main_info, get_search_results, get_similar, get_tags
-from .types import AniDBCharacter, AniDBMainInfo, AniDBSearchResult, AniDBSimilarAnime, AniDBTags
 
 
 class AniDBScraper(HTTPClient):

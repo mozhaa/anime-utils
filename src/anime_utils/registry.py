@@ -3,9 +3,9 @@ from typing import Any, TypedDict
 
 import docstring_parser
 
-from .clients.anidb import AniDBScraper
-from .clients.base import BaseClient
-from .clients.local import LocalClient
+from anime_utils.clients.anidb import AniDBScraper
+from anime_utils.clients.base import BaseClient
+from anime_utils.clients.local import LocalClient
 
 
 class Parameter(TypedDict):

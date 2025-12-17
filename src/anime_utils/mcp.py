@@ -11,7 +11,7 @@ def run(args: argparse.Namespace) -> None:
 
     from fastmcp import FastMCP
 
-    from .registry import get_registry
+    from anime_utils.registry import get_registry
 
     class ClientManager:
         def __init__(self):

@@ -6,7 +6,7 @@ from typing import Optional
 
 from rapidfuzz import fuzz, process
 
-from .types import SearchResult
+from anime_utils.clients.local.types import SearchResult
 
 logger = logging.getLogger(__name__)
 
