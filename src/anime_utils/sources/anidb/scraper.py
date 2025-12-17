@@ -150,10 +150,6 @@ class AniDBScraper(HTTPClient):
         500, 600) corresponding to (0, 0.5, 1, 1.5, 2, 2.5, 3) stars respectively. While this
         method uses the star notation, other parts of the system may use the numeric format.
 
-        Note: Access to adult (hentai) anime content requires authentication via AniDB cookies.
-        Set the `cookies_file` configuration variable to the path of your cookies file
-        to enable searching for adult-rated content.
-
         SEARCH SYNTAX:
         - Basic inclusion/exclusion: Provide comma-separated tag names.
         Example: etags_include="pool episode, furo scene"
