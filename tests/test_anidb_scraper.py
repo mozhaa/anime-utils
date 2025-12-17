@@ -10,13 +10,20 @@ from anime_utils.clients.anidb.core import (
     get_main_info,
     get_search_results,
     get_similar,
+    get_songs,
 )
-from anime_utils.clients.anidb.types import AniDBAnimeTag, AniDBCharacter
+from anime_utils.clients.anidb.types import AniDBAnimeTag, AniDBCharacter, AniDBSong
 
 
 @pytest.fixture
-def page_html() -> str:
+def anidb_7286_html() -> str:
     with open("tests/resources/anidb_7286.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@pytest.fixture
+def anidb_17910_html() -> str:
+    with open("tests/resources/anidb_17910.html", "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -50,7 +57,7 @@ def _find_tag(tags: list[AniDBAnimeTag], path: list[str]) -> AniDBAnimeTag:
     ],
 )
 def test_get_anime_tags(
-    page_html: str,
+    anidb_7286_html: str,
     tag_hierarchy: list[str],
     id_: int,
     description_substring: str,
@@ -58,7 +65,7 @@ def test_get_anime_tags(
     is_abstract: bool,
     not_added: bool,
 ):
-    anime_tags = get_anime_tags(page_html)
+    anime_tags = get_anime_tags(anidb_7286_html)
 
     tag = _find_tag(anime_tags, tag_hierarchy)
     assert tag["id_"] == id_
@@ -77,9 +84,9 @@ def test_get_anime_tags(
     ],
 )
 def test_get_episode_tags(
-    page_html: str, name: str, id_: int, description_substring: str, episode_count: int, episode_list: str
+    anidb_7286_html: str, name: str, id_: int, description_substring: str, episode_count: int, episode_list: str
 ):
-    episode_tags = get_episode_tags(page_html)
+    episode_tags = get_episode_tags(anidb_7286_html)
 
     for tag in episode_tags:
         if tag["name"] == name:
@@ -104,7 +111,7 @@ def test_get_episode_tags(
     ],
 )
 def test_get_character_tags(
-    page_html: str,
+    anidb_7286_html: str,
     category: str,
     name: str,
     id_: int,
@@ -112,7 +119,7 @@ def test_get_character_tags(
     character_count: int,
     size: int,
 ):
-    character_tags = get_character_tags(page_html)
+    character_tags = get_character_tags(anidb_7286_html)
 
     for tag_category in character_tags:
         if tag_category["category"] == category:
@@ -127,8 +134,8 @@ def test_get_character_tags(
     pytest.fail("category not found")
 
 
-def test_get_main_info(page_html: str):
-    info = get_main_info(page_html)
+def test_get_main_info(anidb_7286_html: str):
+    info = get_main_info(anidb_7286_html)
 
     assert info["main_title"] == "B Gata H Kei"
     assert info["type_"] == "TV Series, 12 episodes"
@@ -186,7 +193,7 @@ def _find_character(characters: list[AniDBCharacter], id_: int) -> AniDBCharacte
     ],
 )
 def test_get_characters(
-    page_html: str,
+    anidb_7286_html: str,
     name: str,
     id_: int,
     is_main: bool,
@@ -196,7 +203,7 @@ def test_get_characters(
     tags_sublist: list[str],
     seiyuu: str,
 ):
-    characters = get_characters(page_html)
+    characters = get_characters(anidb_7286_html)
 
     character = _find_character(characters, id_)
     assert character["name"] == name
@@ -219,9 +226,9 @@ def test_get_characters(
     ],
 )
 def test_get_similar(
-    page_html: str, name: str, id_: int, general_info: str, approval_percentage: float, approval_vote_count: int
+    anidb_7286_html: str, name: str, id_: int, general_info: str, approval_percentage: float, approval_vote_count: int
 ):
-    similar_anime = get_similar(page_html)
+    similar_anime = get_similar(anidb_7286_html)
 
     assert len(similar_anime) == 4
 
@@ -344,3 +351,110 @@ def test_get_search_results(
             assert result["ended_date"] == ended_date
             return
     pytest.fail(f"search result with id {id_} was not found")
+
+
+def _find_song(songs: list[AniDBSong], song_id: int) -> AniDBSong:
+    for song in songs:
+        if song["song_id"] == song_id:
+            return song
+    pytest.fail(f"song with id={song_id} was not found")
+
+
+@pytest.mark.parametrize(
+    "relation_type, song_name, song_id, episode_range, rating_value, rating_vote_count, credit_type, staff",
+    [
+        (
+            "opening",
+            "My Dream Girls",
+            110129,
+            "1-13, OP1",
+            None,
+            2,
+            "Vocals/Performed by (歌)",
+            "Nacherry",
+        ),
+        (
+            "opening",
+            "My Dream Girls",
+            110129,
+            "1-13, OP1",
+            None,
+            2,
+            "Lyrics (作詞)",
+            "Motokiyo",
+        ),
+        (
+            "ending",
+            "Togetoge Sadistic",
+            110201,
+            "1-9, ED1",
+            None,
+            1,
+            "Vocals/Performed by (歌)",
+            "Izumi Fuuka, Koga Aoi, Sugiura Shiori",
+        ),
+        (
+            "ending",
+            "Togetoge Sadistic",
+            110201,
+            "1-9, ED1",
+            None,
+            1,
+            "Lyrics (作詞)",
+            "Karasuya Sabou",
+        ),
+        (
+            "ending",
+            "Togetoge Sadistic",
+            111187,
+            "10-13, ED2",
+            None,
+            0,
+            "Vocals/Performed by (歌)",
+            "Aisaka Yuuka, Izumi Fuuka, Koga Aoi, Sugiura Shiori, Tsuda Minami",
+        ),
+        (
+            "insert song",
+            "Lovely Loco",
+            111234,
+            "8-9",
+            None,
+            0,
+            "Vocals/Performed by (歌)",
+            "Aisaka Yuuka",
+        ),
+        (
+            "insert song",
+            "My Dream Girls",
+            110129,
+            "13",
+            None,
+            2,
+            "Music Composition (作曲)",
+            "Motokiyo",
+        ),
+    ],
+)
+def test_get_songs(
+    anidb_17910_html: str,
+    relation_type: str,
+    song_name: str,
+    song_id: int,
+    episode_range: str,
+    rating_value: Optional[float],
+    rating_vote_count: int,
+    credit_type: str,
+    staff: str,
+):
+    songs = get_songs(anidb_17910_html)
+    print(songs)
+
+    song = _find_song(songs, song_id)
+    assert song["relation_type"] == relation_type
+    assert song["song_name"] == song_name
+    assert song["song_id"] == song_id
+    assert song["episode_range"] == episode_range
+    assert song["rating_value"] == rating_value
+    assert song["rating_vote_count"] == rating_vote_count
+    assert song["credit_type"] == credit_type
+    assert song["staff"] == staff

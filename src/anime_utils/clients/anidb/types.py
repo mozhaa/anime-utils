@@ -82,3 +82,14 @@ class AniDBSearchResult(TypedDict):
     members: int
     aired_date: Optional[str]
     ended_date: Optional[str]
+
+
+class AniDBSong(TypedDict):
+    relation_type: str
+    song_name: str
+    song_id: int
+    episode_range: str
+    rating_value: Optional[float]
+    rating_vote_count: int
+    credit_type: str
+    staff: str
