@@ -3,9 +3,9 @@ from typing import Any, TypedDict
 
 import docstring_parser
 
-from .sources.anidb import AniDBScraper
-from .sources.base import BaseClient
-from .sources.local import LocalClient
+from .clients.anidb import AniDBScraper
+from .clients.base import BaseClient
+from .clients.local import LocalClient
 
 
 class Parameter(TypedDict):

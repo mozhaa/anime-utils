@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 
-from anime_utils.sources.anidb.core import (
+from anime_utils.clients.anidb.core import (
     get_anime_tags,
     get_character_tags,
     get_characters,
@@ -11,7 +11,7 @@ from anime_utils.sources.anidb.core import (
     get_search_results,
     get_similar,
 )
-from anime_utils.sources.anidb.types import AniDBAnimeTag, AniDBCharacter
+from anime_utils.clients.anidb.types import AniDBAnimeTag, AniDBCharacter
 
 
 @pytest.fixture
