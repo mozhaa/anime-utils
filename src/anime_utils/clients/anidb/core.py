@@ -147,7 +147,7 @@ def get_character_tags(text: str) -> list[AniDBCharacterTagCategory]:
             if "--" in name:
                 name = name.split("--")[0].strip()
 
-            count = tag_element.css(".tagname .cnt::text").get()
+            count = tag_element.css(".tagname .cnt::text").get("")
             m = re.match(r"\((\d+)\)", count.strip())
             if m is None:
                 raise RuntimeError(f"failed to get count from cnt: {count}")
