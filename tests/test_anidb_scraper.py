@@ -34,6 +34,7 @@ def search_results_html() -> str:
 
 
 def _find_tag(tags: list[AniDBAnimeTag], path: list[str]) -> AniDBAnimeTag:
+    t = None
     for name in path:
         for t in tags:
             if t["name"] == name:
@@ -41,6 +42,8 @@ def _find_tag(tags: list[AniDBAnimeTag], path: list[str]) -> AniDBAnimeTag:
                 break
         else:
             pytest.fail(f"couldn't find tag with name {name}")
+    if t is None:
+        pytest.fail(f"tags list is empty: {tags}")
     return t
 
 
