@@ -157,6 +157,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "debugpy" },
     { name = "ipykernel" },
     { name = "pip" },
     { name = "pytest" },
@@ -178,6 +179,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "debugpy", specifier = ">=1.8.18" },
     { name = "ipykernel", specifier = ">=7.1.0" },
     { name = "pip", specifier = ">=25.3" },
     { name = "pytest", specifier = ">=9.0.2" },
