@@ -353,108 +353,90 @@ def test_get_search_results(
     pytest.fail(f"search result with id {id_} was not found")
 
 
-def _find_song(songs: list[AniDBSong], song_id: int) -> AniDBSong:
+def _find_song(songs: list[AniDBSong], category: str, number: int) -> AniDBSong:
     for song in songs:
-        if song["song_id"] == song_id:
+        if song["category"] == category and song["number"] == number:
             return song
-    pytest.fail(f"song with id={song_id} was not found")
+    pytest.fail(f"song '{category}' #{number} was not found")
 
 
 @pytest.mark.parametrize(
-    "relation_type, song_name, song_id, episode_range, rating_value, rating_vote_count, credit_type, staff",
+    "category, number, song_name, song_id, episode_range, rating_value, rating_vote_count, staff_subset",
     [
         (
             "opening",
+            1,
             "My Dream Girls",
             110129,
             "1-13, OP1",
             None,
             2,
-            "Vocals/Performed by (歌)",
-            "Nacherry",
+            {"Vocals/Performed by (歌)": "Nacherry", "Lyrics (作詞)": "Motokiyo"},
         ),
         (
-            "opening",
-            "My Dream Girls",
-            110129,
-            "1-13, OP1",
+            "ending",
+            1,
+            "Togetoge Sadistic",
+            110201,
+            "1-9, ED1",
             None,
+            1,
+            {"Vocals/Performed by (歌)": "Izumi Fuuka, Koga Aoi, Sugiura Shiori", "Lyrics (作詞)": "Karasuya Sabou"},
+        ),
+        (
+            "ending",
             2,
-            "Lyrics (作詞)",
-            "Motokiyo",
-        ),
-        (
-            "ending",
-            "Togetoge Sadistic",
-            110201,
-            "1-9, ED1",
-            None,
-            1,
-            "Vocals/Performed by (歌)",
-            "Izumi Fuuka, Koga Aoi, Sugiura Shiori",
-        ),
-        (
-            "ending",
-            "Togetoge Sadistic",
-            110201,
-            "1-9, ED1",
-            None,
-            1,
-            "Lyrics (作詞)",
-            "Karasuya Sabou",
-        ),
-        (
-            "ending",
             "Togetoge Sadistic",
             111187,
             "10-13, ED2",
             None,
             0,
-            "Vocals/Performed by (歌)",
-            "Aisaka Yuuka, Izumi Fuuka, Koga Aoi, Sugiura Shiori, Tsuda Minami",
+            {"Vocals/Performed by (歌)": "Aisaka Yuuka, Izumi Fuuka, Koga Aoi, Sugiura Shiori, Tsuda Minami"},
         ),
         (
             "insert song",
+            1,
             "Lovely Loco",
             111234,
             "8-9",
             None,
             0,
-            "Vocals/Performed by (歌)",
-            "Aisaka Yuuka",
+            {"Vocals/Performed by (歌)": "Aisaka Yuuka"},
         ),
         (
             "insert song",
+            2,
             "My Dream Girls",
             110129,
             "13",
             None,
             2,
-            "Music Composition (作曲)",
-            "Motokiyo",
+            {"Music Composition (作曲)": "Motokiyo"},
         ),
     ],
 )
 def test_get_songs(
     anidb_17910_html: str,
-    relation_type: str,
+    category: str,
+    number: int,
     song_name: str,
     song_id: int,
     episode_range: str,
     rating_value: Optional[float],
     rating_vote_count: int,
-    credit_type: str,
-    staff: str,
+    staff_subset: dict[str, str],
 ):
     songs = get_songs(anidb_17910_html)
     print(songs)
 
-    song = _find_song(songs, song_id)
-    assert song["relation_type"] == relation_type
+    song = _find_song(songs, category, number)
+    assert song["category"] == category
+    assert song["number"] == number
     assert song["song_name"] == song_name
     assert song["song_id"] == song_id
     assert song["episode_range"] == episode_range
     assert song["rating_value"] == rating_value
     assert song["rating_vote_count"] == rating_vote_count
-    assert song["credit_type"] == credit_type
-    assert song["staff"] == staff
+    for credit_type, creator in staff_subset.items():
+        assert credit_type in song["staff"]
+        assert song["staff"][credit_type] == creator

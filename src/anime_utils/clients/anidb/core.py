@@ -13,6 +13,7 @@ from anime_utils.clients.anidb.types import (
     AniDBMainInfo,
     AniDBSearchResult,
     AniDBSimilarAnime,
+    AniDBSong,
     AniDBTags,
 )
 
@@ -448,3 +449,114 @@ def get_search_results(text: str) -> list[AniDBSearchResult]:
         )
 
     return results
+
+
+def get_songs(text: str) -> list[AniDBSong]:
+    selector = parsel.Selector(text=text)
+
+    songs: list[AniDBSong] = []
+
+    category: Optional[str] = None
+    number: int = 1
+    song_name: Optional[str] = None
+    song_id: Optional[int] = None
+    episode_range: Optional[str] = None
+    rating_value: Optional[float] = None
+    rating_vote_count: Optional[int] = None
+    staff: dict[str, str] = {}
+    credit: Optional[str] = None
+    is_first_relation = True
+    is_first_song = True
+
+    def add_song() -> None:
+        nonlocal number
+
+        if (
+            category is None
+            or song_id is None
+            or song_name is None
+            or episode_range is None
+            or rating_vote_count is None
+            or staff is None
+        ):
+            raise RuntimeError("invalid songtable structure")
+
+        songs.append(
+            AniDBSong(
+                category=category,
+                number=number,
+                song_name=song_name,
+                song_id=song_id,
+                episode_range=episode_range,
+                rating_value=rating_value,
+                rating_vote_count=rating_vote_count,
+                staff=staff,
+            )
+        )
+
+        number += 1
+
+    for element in selector.css("#songlist tbody td"):
+        classes = element.attrib["class"].split(" ")
+
+        if ("reltype" in classes or "song" in classes) and not is_first_relation and not is_first_song:
+            add_song()
+
+        if "reltype" in classes:
+            category = element.css("::text").get("").strip()
+            if category == "":
+                raise RuntimeError(f"category is empty: {element.get()}")
+            number = 1
+            is_first_relation = False
+            is_first_song = True
+        elif "song" in classes:
+            song_element = element.css("a")
+
+            song_name = song_element.css("::text").get()
+            if song_name is None:
+                raise RuntimeError(f"song name is empty: {element.get()}")
+
+            song_id = int(song_element.attrib["href"].split("/")[-1])
+
+            staff = {}
+            is_first_song = False
+        elif "credit" in classes:
+            credit = element.css("a::text").get("").strip()
+            if credit == "":
+                raise RuntimeError(f"song credit type is empty: {element.get()}")
+        elif "creator" in classes:
+            if credit is None:
+                raise RuntimeError("invalid songtable structure")
+
+            creators = []
+            for creator_element in element.css("a"):
+                creator = creator_element.css("::text").get("").strip()
+                if creator == "":
+                    raise RuntimeError(f"creator name is empty: {element.get()}")
+                creators.append(creator)
+
+            if len(creators) == 0:
+                raise RuntimeError(f"creators list is empty: {element.get()}")
+
+            staff[credit] = ", ".join(creators)
+        elif "eprange" in classes:
+            episode_range = element.css("::text").get("").strip()
+            if episode_range == "":
+                raise RuntimeError(f"episode range is empty: {element.get()}")
+        elif "rating" in classes:
+            rating_value_str = element.css("::text").get()
+            if rating_value_str is None:
+                raise RuntimeError(f"rating value is empty: {element.get()}")
+
+            rating_value = float(rating_value_str) if "N/A" not in rating_value_str else None
+
+            rating_vote_count_str = element.css("span.count::text").get()
+            if rating_vote_count_str is None:
+                raise RuntimeError(f"rating vote count is empty: {element.get()}")
+
+            rating_vote_count = int(rating_vote_count_str.strip()[1:-1])
+
+    if not is_first_relation:
+        add_song()
+
+    return songs

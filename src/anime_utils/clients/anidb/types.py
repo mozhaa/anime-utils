@@ -85,11 +85,11 @@ class AniDBSearchResult(TypedDict):
 
 
 class AniDBSong(TypedDict):
-    relation_type: str
+    category: str
+    number: int
     song_name: str
     song_id: int
     episode_range: str
     rating_value: Optional[float]
     rating_vote_count: int
-    credit_type: str
-    staff: str
+    staff: dict[str, str]
