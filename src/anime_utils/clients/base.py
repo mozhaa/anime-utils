@@ -63,7 +63,10 @@ class HTTPClient(BaseClient):
             self._cookie_jar = None
 
         self._session = aiohttp.ClientSession(
-            base_url=self.base_url, headers=default_headers, connector=connector, cookie_jar=self._cookie_jar
+            base_url=self.base_url,
+            headers=default_headers,
+            connector=connector,
+            cookie_jar=self._cookie_jar,  # type: ignore
         )
         self._limiter = AsyncLimiter(self.max_rate, self.time_period)
         self._cache = FileCache(self.cache_dir)
