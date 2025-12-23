@@ -4,7 +4,7 @@ import zlib
 from abc import abstractmethod
 from contextlib import AbstractAsyncContextManager
 from pathlib import Path
-from typing import Optional, Self
+from typing import Literal, Optional, Self
 
 import aiofiles
 import aiosqlite
@@ -19,6 +19,16 @@ class BaseCache[key_t, val_t](AbstractAsyncContextManager):
 
     @abstractmethod
     async def set(self, key: key_t, value: val_t) -> None:
+        pass
+
+
+class BaseCacheWithInvalids[key_t, val_t](BaseCache[key_t, val_t | Literal[False]]):
+    @abstractmethod
+    async def get(self, key: key_t) -> Optional[val_t | Literal[False]]:
+        pass
+
+    @abstractmethod
+    async def set(self, key: key_t, value: val_t | Literal[False]) -> None:
         pass
 
 

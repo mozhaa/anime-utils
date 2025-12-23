@@ -24,6 +24,8 @@ class AniDBScraperSettings(BaseClientSettings):
 class IDsMoeClientSettings(BaseSettings):
     api_key: str
     rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=5)
+    cache_db_name: str = "idsmoe.db"
+    cache_ttl: float = 60 * 60 * 24
 
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 
