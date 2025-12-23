@@ -102,6 +102,8 @@ class IDsMoeSQLiteCache(BaseCacheWithInvalids[tuple[Any, str], dict]):
 
 
 class IDsMoeClient(BaseClient):
+    """Client for mapping anime IDs via ids.moe API."""
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -110,6 +112,15 @@ class IDsMoeClient(BaseClient):
         cache_db_path: Optional[Path] = None,
         cache_ttl: Optional[float] = None,
     ):
+        """Initialize the IDsMoe client.
+
+        Args:
+            api_key: API key for authentication
+            max_rate: Maximum number of requests per time period
+            time_period: Time period in seconds for rate limiting
+            cache_db_path: Path to SQLite cache database
+            cache_ttl: Cache time-to-live in seconds
+        """
         settings = get_settings()
         if api_key is None:
             api_key = settings.idsmoe_client_settings.api_key
@@ -142,6 +153,17 @@ class IDsMoeClient(BaseClient):
         await self._stack.__aexit__(exc_type, exc_val, exc_tb)
 
     async def get(self, id_: int, platform: str) -> Optional[dict[str, Any]]:
+        """Get anime information and ID mappings for a given ID and platform.
+
+        Args:
+            id_: The anime ID to look up.
+            platform: The platform of the ID (e.g., "anidb", "anilist", "myanimelist", "shikimori").
+
+        Returns:
+            A dictionary containing anime information with ID mappings across platforms,
+            including keys like "title", "anidb", "anilist", "myanimelist", etc.
+            Returns None if the ID is not found.
+        """
         result = await self._cache.get((id_, platform))
         if result is not None:
             return result or None
