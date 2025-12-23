@@ -21,6 +21,11 @@ class AniDBScraperSettings(BaseClientSettings):
     rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=10)
 
 
+class IDsMoeClientSettings:
+    api_key: str
+    rate_limit: RateLimitSettings
+
+
 class LocalSettings(BaseSettings):
     xml_path: Optional[str] = None
     pickle_path: Optional[str] = None
@@ -29,6 +34,7 @@ class LocalSettings(BaseSettings):
 class Settings(BaseSettings):
     cache_dir: str = "~/.cache/anime-utils"
     anidb_scraper_settings: AniDBScraperSettings
+    idsmoe_client_settings: IDsMoeClientSettings
     local_settings: LocalSettings
 
     @classmethod
@@ -50,4 +56,4 @@ class Settings(BaseSettings):
 
 @cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # type: ignore
