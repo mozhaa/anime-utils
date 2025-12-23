@@ -21,9 +21,11 @@ class AniDBScraperSettings(BaseClientSettings):
     rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=10)
 
 
-class IDsMoeClientSettings:
+class IDsMoeClientSettings(BaseSettings):
     api_key: str
-    rate_limit: RateLimitSettings
+    rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=5)
+
+    model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 
 
 class LocalSettings(BaseSettings):
