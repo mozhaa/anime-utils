@@ -33,7 +33,7 @@ class IDsMoeClient(BaseClient):
         headers = default_headers.copy()
         headers["Authorization"] = f"Bearer {self.api_key}"
         self._session = ClientSession(base_url="https://api.ids.moe", headers=headers)
-        self._stack.enter_context(self._session)
+        await self._stack.enter_async_context(self._session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
