@@ -1,7 +1,8 @@
 import logging
 import re
 import zlib
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 from typing import Optional, Self
 
@@ -11,15 +12,7 @@ import aiosqlite
 logger = logging.getLogger(__name__)
 
 
-class BaseCache[key_t, val_t](ABC):
-    @abstractmethod
-    async def __aenter__(self) -> Self:
-        pass
-
-    @abstractmethod
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        pass
-
+class BaseCache[key_t, val_t](AbstractAsyncContextManager):
     @abstractmethod
     async def get(self, key: key_t) -> Optional[val_t]:
         pass
