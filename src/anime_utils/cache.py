@@ -1,22 +1,43 @@
 import logging
 import re
 import zlib
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Self
 
 import aiofiles
 
 logger = logging.getLogger(__name__)
 
 
-class FileCache:
-    def __init__(self, cache_dir: str) -> None:
-        self.cache_dir = Path(cache_dir).expanduser()
-        self._ensure_cache_dir()
+class BaseCache[key_t, val_t](ABC):
+    @abstractmethod
+    async def __aenter__(self) -> Self:
+        pass
 
-    def _ensure_cache_dir(self) -> None:
-        logger.debug(f"creating cache directory {self.cache_dir}")
+    @abstractmethod
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        pass
+
+    @abstractmethod
+    async def get(self, key: key_t) -> Optional[val_t]:
+        pass
+
+    @abstractmethod
+    async def set(self, key: key_t, value: val_t) -> None:
+        pass
+
+
+class FileCache(BaseCache[str, bytes]):
+    def __init__(self, cache_dir: Path) -> None:
+        self.cache_dir = cache_dir
+
+    async def __aenter__(self) -> Self:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        pass
 
     def _get_cache_path(self, key: str) -> Path:
         m = re.search(r'[<>:"/\\|?*]', key)
@@ -39,11 +60,11 @@ class FileCache:
             cache_path.unlink()
             return None
 
-    async def set(self, key: str, data: bytes) -> None:
+    async def set(self, key: str, value: bytes) -> None:
         cache_path = self._get_cache_path(key)
 
         try:
-            compressed_data = zlib.compress(data)
+            compressed_data = zlib.compress(value)
             async with aiofiles.open(cache_path, "wb+") as f:
                 await f.write(compressed_data)
         except zlib.error as e:

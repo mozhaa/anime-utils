@@ -30,18 +30,12 @@ class HTTPClient(BaseClient):
         socks_url: Optional[str],
         cookies_file: Optional[str] = None,
     ) -> None:
-        self.cache_dir = cache_dir
+        self.cache_dir = Path(cache_dir).expanduser()
         self.max_rate = max_rate
         self.time_period = time_period
         self.base_url = base_url
         self.socks_url = socks_url
         self.cookies_file = cookies_file
-
-        self._session: aiohttp.ClientSession | None = None
-        self._limiter: AsyncLimiter | None = None
-        self._cache: FileCache | None = None
-        self._http_client: CachedHTTPClient | None = None
-        self._cookie_jar: AioCookieJar | None = None
 
     async def __aenter__(self):
         connector = None
