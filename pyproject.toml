@@ -10,6 +10,7 @@ dependencies = [
     "aiohttp>=3.13.2",
     "aiohttp-socks>=0.11.0",
     "aiolimiter>=1.2.1",
+    "aiosqlite>=0.22.0",
     "docstring-parser>=0.17.0",
     "fastmcp>=2.14.1",
     "parsel>=1.10.0",
