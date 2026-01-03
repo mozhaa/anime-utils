@@ -37,9 +37,9 @@ class LocalSettings(BaseSettings):
 
 class Settings(BaseSettings):
     cache_dir: str = "~/.cache/anime-utils"
-    anidb_scraper_settings: AniDBScraperSettings
+    anidb_scraper_settings: AniDBScraperSettings = AniDBScraperSettings()
     idsmoe_client_settings: IDsMoeClientSettings
-    local_settings: LocalSettings
+    local_settings: LocalSettings = LocalSettings()
 
     @classmethod
     def settings_customise_sources(
