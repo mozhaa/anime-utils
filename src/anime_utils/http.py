@@ -3,6 +3,7 @@ from typing import Optional
 
 from aiohttp import ClientSession
 from aiolimiter import AsyncLimiter
+from tenacity import AsyncRetrying
 
 from anime_utils.cache import FileCache
 
@@ -15,10 +16,17 @@ default_headers = {
 
 
 class CachedHTTPClient:
-    def __init__(self, session: ClientSession, cache: FileCache, limiter: AsyncLimiter) -> None:
+    def __init__(
+        self,
+        session: ClientSession,
+        cache: FileCache,
+        limiter: AsyncLimiter,
+        retry: AsyncRetrying,
+    ) -> None:
         self.session = session
         self.cache = cache
         self.limiter = limiter
+        self._retry = retry
 
     async def get(self, url: str, cache_key: Optional[str]) -> str:
         if cache_key is not None:
@@ -28,13 +36,16 @@ class CachedHTTPClient:
                 return cached_data.decode("utf-8")
             logger.info("cache miss")
 
-        logger.info(f"requesting page {url}")
-        async with self.limiter:
-            async with self.session.get(url, headers=default_headers) as response:
-                response.raise_for_status()
-                text = await response.text()
+        async def _fetch() -> str:
+            logger.info(f"requesting page {url}")
+            async with self.limiter:
+                async with self.session.get(url, headers=default_headers) as response:
+                    response.raise_for_status()
+                    text = await response.text()
 
-                if cache_key is not None:
-                    await self.cache.set(cache_key, text.encode("utf-8"))
+                    if cache_key is not None:
+                        await self.cache.set(cache_key, text.encode("utf-8"))
 
-                return text
+                    return text
+
+        return await (await self._retry(_fetch))

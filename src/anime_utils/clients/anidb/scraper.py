@@ -3,12 +3,20 @@ import json
 from typing import Any, Literal, Optional
 from urllib.parse import quote, urlencode
 
-from anime_utils.clients.anidb.core import get_characters, get_main_info, get_search_results, get_similar, get_tags
+from anime_utils.clients.anidb.core import (
+    get_characters,
+    get_main_info,
+    get_search_results,
+    get_similar,
+    get_songs,
+    get_tags,
+)
 from anime_utils.clients.anidb.types import (
     AniDBCharacter,
     AniDBMainInfo,
     AniDBSearchResult,
     AniDBSimilarAnime,
+    AniDBSong,
     AniDBTags,
 )
 from anime_utils.clients.base import HTTPClient
@@ -27,6 +35,9 @@ class AniDBScraper(HTTPClient):
         time_period: Optional[int] = None,
         socks_url: Optional[str] = None,
         cookies_file: Optional[str] = None,
+        max_attempts: Optional[int] = None,
+        backoff_factor: Optional[float] = None,
+        initial_delay: Optional[float] = None,
     ) -> None:
         """Initialize the AniDB scraper.
 
@@ -48,7 +59,23 @@ class AniDBScraper(HTTPClient):
             socks_url = settings.anidb_scraper_settings.socks_url
         if cookies_file is None:
             cookies_file = settings.anidb_scraper_settings.cookies_file
-        super().__init__(cache_dir, max_rate, time_period, "https://anidb.net", socks_url, cookies_file)
+        if max_attempts is None:
+            max_attempts = settings.anidb_scraper_settings.retry_settings.max_attempts
+        if backoff_factor is None:
+            backoff_factor = settings.anidb_scraper_settings.retry_settings.backoff_factor
+        if initial_delay is None:
+            initial_delay = settings.anidb_scraper_settings.retry_settings.initial_delay
+        super().__init__(
+            cache_dir,
+            max_rate,
+            time_period,
+            max_attempts,
+            backoff_factor,
+            initial_delay,
+            "https://anidb.net",
+            socks_url,
+            cookies_file,
+        )
 
     async def get_tags(self, anime_id: int, with_descriptions: bool = False) -> AniDBTags:
         """Get tags for an anime from AniDB.

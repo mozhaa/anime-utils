@@ -4,9 +4,11 @@ from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import Any, Literal, Optional, Self
 
+import aiohttp
 import aiosqlite
 from aiohttp import ClientSession
 from aiolimiter import AsyncLimiter
+from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from anime_utils.cache import BaseCacheWithInvalids
 from anime_utils.clients.base import BaseClient
@@ -111,6 +113,9 @@ class IDsMoeClient(BaseClient):
         time_period: Optional[int] = None,
         cache_db_path: Optional[Path] = None,
         cache_ttl: Optional[float] = None,
+        max_attempts: Optional[int] = None,
+        backoff_factor: Optional[float] = None,
+        initial_delay: Optional[float] = None,
     ):
         """Initialize the IDsMoe client.
 
@@ -120,6 +125,9 @@ class IDsMoeClient(BaseClient):
             time_period: Time period in seconds for rate limiting
             cache_db_path: Path to SQLite cache database
             cache_ttl: Cache time-to-live in seconds
+            max_attempts: Maximum number of retry attempts
+            backoff_factor: Multiplier for exponential backoff
+            initial_delay: Initial delay for retry in seconds
         """
         settings = get_settings()
         if api_key is None:
@@ -132,9 +140,20 @@ class IDsMoeClient(BaseClient):
             cache_db_path = Path(settings.cache_dir).expanduser() / settings.idsmoe_client_settings.cache_db_name
         if cache_ttl is None:
             cache_ttl = settings.idsmoe_client_settings.cache_ttl
+        if max_attempts is None:
+            max_attempts = settings.idsmoe_client_settings.retry_settings.max_attempts
+        if backoff_factor is None:
+            backoff_factor = settings.idsmoe_client_settings.retry_settings.backoff_factor
+        if initial_delay is None:
+            initial_delay = settings.idsmoe_client_settings.retry_settings.initial_delay
 
         self.api_key = api_key
         self._limiter = AsyncLimiter(max_rate=max_rate, time_period=time_period)
+        self._retry = AsyncRetrying(
+            stop=stop_after_attempt(max_attempts),
+            wait=wait_exponential(multiplier=backoff_factor, min=initial_delay),
+            retry=retry_if_exception_type((aiohttp.ClientError, aiohttp.ClientResponseError)),
+        )
 
         headers = default_headers.copy()
         headers["Authorization"] = f"Bearer {self.api_key}"
@@ -167,8 +186,13 @@ class IDsMoeClient(BaseClient):
         result = await self._cache.get((id_, platform))
         if result is not None:
             return result or None
-        async with self._session.get(f"/ids/{id_}?platform={platform}") as response:
-            if response.ok:
-                result = await response.json()
-                await self._cache.set((id_, platform), result)
-                return result
+
+        async def _fetch() -> Optional[dict[str, Any]]:
+            async with self._session.get(f"/ids/{id_}?platform={platform}") as response:
+                if response.ok:
+                    result = await response.json()
+                    await self._cache.set((id_, platform), result)
+                    return result
+                return None
+
+        return await (await self._retry(_fetch))

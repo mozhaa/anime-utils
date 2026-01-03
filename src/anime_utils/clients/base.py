@@ -4,6 +4,7 @@ from typing import Optional
 
 import aiohttp
 from aiolimiter import AsyncLimiter
+from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from anime_utils.cache import FileCache
 from anime_utils.http import CachedHTTPClient, default_headers
@@ -26,6 +27,9 @@ class HTTPClient(BaseClient):
         cache_dir: str,
         max_rate: int,
         time_period: int,
+        max_attempts: int,
+        backoff_factor: float,
+        initial_delay: float,
         base_url: str,
         socks_url: Optional[str],
         cookies_file: Optional[str] = None,
@@ -33,6 +37,11 @@ class HTTPClient(BaseClient):
         self.cache_dir = Path(cache_dir).expanduser()
         self.max_rate = max_rate
         self.time_period = time_period
+        self._retry = AsyncRetrying(
+            stop=stop_after_attempt(max_attempts),
+            wait=wait_exponential(multiplier=backoff_factor, min=initial_delay),
+            retry=retry_if_exception_type((aiohttp.ClientError, aiohttp.ClientResponseError)),
+        )
         self.base_url = base_url
         self.socks_url = socks_url
         self.cookies_file = cookies_file
@@ -64,7 +73,12 @@ class HTTPClient(BaseClient):
         )
         self._limiter = AsyncLimiter(self.max_rate, self.time_period)
         self._cache = FileCache(self.cache_dir)
-        self._http_client = CachedHTTPClient(self._session, self._cache, self._limiter)
+        self._http_client = CachedHTTPClient(
+            self._session,
+            self._cache,
+            self._limiter,
+            self._retry
+        )
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

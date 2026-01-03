@@ -9,10 +9,17 @@ class RateLimitSettings(BaseSettings):
     time_period: int
 
 
+class RetrySettings(BaseSettings):
+    max_attempts: int = 1
+    backoff_factor: float = 1
+    initial_delay: float = 1
+
+
 class BaseClientSettings(BaseSettings):
     cookies_file: Optional[str] = None
     socks_url: Optional[str] = None
     rate_limit: RateLimitSettings
+    retry_settings: RetrySettings = RetrySettings()
 
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 
@@ -26,6 +33,7 @@ class IDsMoeClientSettings(BaseSettings):
     rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=5)
     cache_db_name: str = "idsmoe.db"
     cache_ttl: float = 60 * 60 * 24
+    retry_settings: RetrySettings = RetrySettings()
 
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 
