@@ -251,3 +251,15 @@ class AniDBScraper(HTTPClient):
         if limit:
             results = results[:limit]
         return results
+
+    async def get_songs(self, anime_id: int) -> list[AniDBSong]:
+        """Get songs list for an anime from AniDB.
+
+        Args:
+            anime_id: The AniDB anime ID
+
+        Returns:
+            List of songs for the anime
+        """
+        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        return get_songs(text)
