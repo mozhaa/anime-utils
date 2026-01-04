@@ -73,12 +73,7 @@ class HTTPClient(BaseClient):
         )
         self._limiter = AsyncLimiter(self.max_rate, self.time_period)
         self._cache = FileCache(self.cache_dir)
-        self._http_client = CachedHTTPClient(
-            self._session,
-            self._cache,
-            self._limiter,
-            self._retry
-        )
+        self._http_client = CachedHTTPClient(self._session, self._cache, self._limiter, self._retry)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
