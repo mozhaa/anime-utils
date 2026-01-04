@@ -1,6 +1,6 @@
 [project]
 name = "anime-utils"
-version = "1.0.0"
+version = "1.1.0"
 description = "Fetch data from multiple anime resources"
 readme = "README.md"
 authors = [{ name = "Vasiliy Mozhaev", email = "mozhay2005@gmail.com" }]
