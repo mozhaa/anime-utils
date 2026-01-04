@@ -1,11 +1,13 @@
 import json
 import logging
-from pathlib import PurePosixPath
+from contextlib import AsyncExitStack
+from pathlib import Path, PurePosixPath
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlparse
 
 from aiohttp import ClientSession
 
+from anime_utils.cache import SQLiteCache
 from anime_utils.clients.base import BaseClient
 from anime_utils.config import get_settings
 from anime_utils.http import default_headers
@@ -52,12 +54,12 @@ def process_anime(anime: dict[str, Any]) -> dict[str, Any]:
             "dropped": 0,
             "on_hold": 0,
         },
-    ).items()
+    )
 
     anime["scoresStats"] = set_defaults(
         dict(map(lambda x: x.values(), anime["scoresStats"])),
         {i: 0 for i in range(1, 11)},
-    ).items()
+    )
 
     anidb_url = next(iter([x["url"] for x in anime["externalLinks"] if "anidb.net" in x["url"]]), None)
     anime["anidb_id"] = get_anidb_id(anidb_url) if anidb_url is not None else None
@@ -84,6 +86,8 @@ class ShikimoriClient(BaseClient):
         self,
         max_rate: Optional[int] = None,
         time_period: Optional[int] = None,
+        cache_db_path: Optional[Path] = None,
+        cache_ttl: Optional[float] = None,
         max_attempts: Optional[int] = None,
         backoff_factor: Optional[float] = None,
         initial_delay: Optional[float] = None,
@@ -93,6 +97,10 @@ class ShikimoriClient(BaseClient):
             max_rate = settings.shikimori_client_settings.rate_limit.max_rate
         if time_period is None:
             time_period = settings.shikimori_client_settings.rate_limit.time_period
+        if cache_db_path is None:
+            cache_db_path = Path(settings.cache_dir).expanduser() / settings.shikimori_client_settings.cache_db_name
+        if cache_ttl is None:
+            cache_ttl = settings.shikimori_client_settings.cache_ttl
         if max_attempts is None:
             max_attempts = settings.shikimori_client_settings.retry_settings.max_attempts
         if backoff_factor is None:
@@ -110,15 +118,24 @@ class ShikimoriClient(BaseClient):
             retry=retry_if_exception_type((json.JSONDecodeError,)),
         )
         self._session = ClientSession(headers=default_headers)
+        self._cache = SQLiteCache(cache_db_path, cache_ttl)
 
     async def __aenter__(self):
-        await self._session.__aenter__()
+        self._stack = AsyncExitStack()
+        await self._stack.__aenter__()
+        await self._stack.enter_async_context(self._cache)
+        await self._stack.enter_async_context(self._session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self._session.close()
+        await self._stack.__aexit__(exc_type, exc_val, exc_tb)
 
     async def get_anime(self, mal_id: int) -> Optional[dict[str, Any]]:
+        cache_key = f"anime:{mal_id}"
+        cached = await self._cache.get(cache_key)
+        if cached is not None:
+            return json.loads(cached)
+
         logger.info(f"fetching anime with mal_id: {mal_id}")
         query = f'{{ animes(ids: "{mal_id}", limit: 1) {{ {GRAPHQL_ARGS} }} }}'
         body = {"operationName": None, "query": query, "variables": {}}
@@ -127,7 +144,10 @@ class ShikimoriClient(BaseClient):
             async with self._session.post(url=GRAPHQL_URL, json=body) as response:
                 data = json.loads(await response.text())
             animes = data["data"]["animes"]
-            return process_anime(animes[0]) if len(animes) > 0 else None
+            result = process_anime(animes[0]) if len(animes) > 0 else None
+            if result is not None:
+                await self._cache.set(cache_key, json.dumps(result))
+            return result
 
         return await self._retry(_fetch)
 

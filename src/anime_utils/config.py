@@ -40,6 +40,8 @@ class IDsMoeClientSettings(BaseSettings):
 
 class ShikimoriClientSettings(BaseSettings):
     rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=5)
+    cache_db_name: str = "shikimori.db"
+    cache_ttl: float = 60 * 60 * 24
     retry_settings: RetrySettings = RetrySettings()
 
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)

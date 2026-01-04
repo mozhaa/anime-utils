@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 import zlib
 from abc import abstractmethod
 from contextlib import AbstractAsyncContextManager
@@ -33,13 +34,14 @@ class BaseCacheWithInvalids[key_t, val_t](BaseCache[key_t, val_t | Literal[False
 
 
 class SQLiteCache(BaseCache[str, str]):
-    def __init__(self, db_path: Path) -> None:
+    def __init__(self, db_path: Path, ttl: Optional[float] = None) -> None:
         self.db_path = db_path
+        self.ttl = ttl
 
     async def __aenter__(self):
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.db = await aiosqlite.connect(self.db_path)
-        await self.db.execute("CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, value TEXT)")
+        await self.db.execute("CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, value TEXT, timestamp REAL)")
         await self.db.commit()
         return self
 
@@ -47,13 +49,25 @@ class SQLiteCache(BaseCache[str, str]):
         await self.db.close()
 
     async def get(self, key: str) -> Optional[str]:
-        cursor = await self.db.execute("SELECT value FROM cache WHERE key = ?", (key,))
+        cursor = await self.db.execute("SELECT value, timestamp FROM cache WHERE key = ?", (key,))
         row = await cursor.fetchone()
         await cursor.close()
-        return row[0] if row else None
+        if not row:
+            return None
+
+        value, timestamp = row
+        if self.ttl is not None and time.time() - timestamp > self.ttl:
+            await self.db.execute("DELETE FROM cache WHERE key = ?", (key,))
+            await self.db.commit()
+            return None
+
+        return value
 
     async def set(self, key: str, value: str) -> None:
-        await self.db.execute("INSERT OR REPLACE INTO cache (key, value) VALUES (?, ?)", (key, value))
+        timestamp = time.time()
+        await self.db.execute(
+            "INSERT OR REPLACE INTO cache (key, value, timestamp) VALUES (?, ?, ?)", (key, value, timestamp)
+        )
         await self.db.commit()
 
 
