@@ -1,5 +1,6 @@
 import json
 from typing import Optional
+from urllib.parse import quote_plus
 
 from anime_utils.clients.base import HTTPClient
 from anime_utils.clients.mal.types import MALItem
@@ -31,8 +32,6 @@ class MALClient(HTTPClient):
         )
 
     async def search(self, query: str) -> dict[str, list[MALItem]]:
-        from urllib.parse import quote_plus
-
         url = f"https://myanimelist.net/search/prefix.json?type=all&keyword={quote_plus(query)}&v=1"
 
         async for attempt in self._retry:

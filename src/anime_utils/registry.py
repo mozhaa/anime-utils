@@ -38,7 +38,7 @@ def get_registry() -> list[Client]:
     for client in clients:
         tools = []
         for name, func in inspect.getmembers(client, inspect.isfunction):
-            if name.startswith("__"):
+            if name.startswith("_"):
                 continue
 
             docstring = inspect.getdoc(func)
@@ -48,6 +48,8 @@ def get_registry() -> list[Client]:
 
             help_texts: dict[str, str] = {}
             for param in parsed_doc.params:
+                if param.arg_name is None or param.description is None:
+                    raise RuntimeError(f"{client.name}.{name} {param=} does not have a name or a description")
                 help_texts[param.arg_name] = param.description
 
             params = []
@@ -64,7 +66,11 @@ def get_registry() -> list[Client]:
                     )
                 )
 
-            examples = "\n".join(example.description for example in parsed_doc.examples) if parsed_doc.examples else ""
+            examples = (
+                "\n".join(example.description for example in parsed_doc.examples if example.description is not None)
+                if parsed_doc.examples
+                else ""
+            )
 
             tools.append(
                 Tool(
@@ -79,7 +85,7 @@ def get_registry() -> list[Client]:
             Client(
                 cls=client,
                 name=client.name,
-                description=inspect.getdoc(client),
+                description=inspect.getdoc(client) or "",
                 tools=tools,
             )
         )

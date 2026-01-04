@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 class AniDBXMLSearchEngine:
     def __init__(self, xml_path: str, pickle_path: Optional[str]) -> None:
-        self.anime_list: list[tuple[str, str]] = []
-        self.anime_titles: dict[str, list[str]] = {}
+        self.anime_list: list[tuple[int, str]] = []
+        self.anime_titles: dict[int, list[str]] = {}
 
         if pickle_path is not None:
             try:
@@ -33,6 +33,9 @@ class AniDBXMLSearchEngine:
 
         for anime in root.findall("anime"):
             aid = anime.get("aid")
+            if aid is None:
+                continue
+            aid = int(aid)
             titles: list[str] = []
 
             for title_elem in anime.findall("title"):
