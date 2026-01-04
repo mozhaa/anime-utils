@@ -1,3 +1,3 @@
 from .client import IDsMoeClient
 
-__all__ = [IDsMoeClient]
+__all__ = ["IDsMoeClient"]
