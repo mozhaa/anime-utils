@@ -1,0 +1,43 @@
+# anime-utils configuration file schema
+# This file shows the structure of the config file with default values
+# Copy this to anime-utils-config.yaml and customize as needed
+
+cache_dir: "~/.cache/anime-utils"
+
+anidb_scraper_settings:
+  cookies_file: null
+  socks_url: null
+  rate_limit:
+    max_rate: 3
+    time_period: 10
+  retry_settings:
+    max_attempts: 1
+    backoff_factor: 1
+    initial_delay: 1
+
+idsmoe_client_settings:
+  api_key: ""  # Required: your IDsMoe API key
+  rate_limit:
+    max_rate: 3
+    time_period: 5
+  cache_db_name: "idsmoe.db"
+  cache_ttl: 86400  # 24 hours in seconds
+  retry_settings:
+    max_attempts: 1
+    backoff_factor: 1
+    initial_delay: 1
+
+shikimori_client_settings:
+  rate_limit:
+    max_rate: 3
+    time_period: 5
+  cache_db_name: "shikimori.db"
+  cache_ttl: 86400  # 24 hours in seconds
+  retry_settings:
+    max_attempts: 1
+    backoff_factor: 1
+    initial_delay: 1
+
+local_settings:
+  xml_path: null
+  pickle_path: null
