@@ -2,13 +2,14 @@ import json
 import logging
 from contextlib import AsyncExitStack
 from pathlib import Path, PurePosixPath
-from typing import Any, Optional
+from typing import Any, Optional, cast
 from urllib.parse import parse_qsl, urlparse
 
 from aiohttp import ClientSession
 
 from anime_utils.cache import SQLiteCache
 from anime_utils.clients.base import BaseClient
+from anime_utils.clients.shikimori.types import ShikimoriAnime
 from anime_utils.config import get_settings
 from anime_utils.http import default_headers
 
@@ -25,7 +26,7 @@ GRAPHQL_ARGS = (
 )
 
 
-def process_anime(anime: dict[str, Any]) -> dict[str, Any]:
+def process_anime(anime: dict[str, Any]) -> ShikimoriAnime:
     def set_default[key_t, val_t](obj: dict[key_t, val_t], key: key_t, value: val_t) -> dict[key_t, val_t]:
         if obj.get(key, None) is None:
             obj[key] = value
@@ -65,7 +66,7 @@ def process_anime(anime: dict[str, Any]) -> dict[str, Any]:
     anime["anidb_id"] = get_anidb_id(anidb_url) if anidb_url is not None else None
     anime["id"] = int(anime["id"])
 
-    return anime
+    return cast(ShikimoriAnime, anime)
 
 
 def get_anidb_id(url: str) -> int:
@@ -130,7 +131,7 @@ class ShikimoriClient(BaseClient):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self._stack.__aexit__(exc_type, exc_val, exc_tb)
 
-    async def get_anime(self, mal_id: int) -> Optional[dict[str, Any]]:
+    async def get_anime(self, mal_id: int) -> Optional[ShikimoriAnime]:
         cache_key = f"anime:{mal_id}"
         cached = await self._cache.get(cache_key)
         if cached is not None:
@@ -140,7 +141,7 @@ class ShikimoriClient(BaseClient):
         query = f'{{ animes(ids: "{mal_id}", limit: 1) {{ {GRAPHQL_ARGS} }} }}'
         body = {"operationName": None, "query": query, "variables": {}}
 
-        async def _fetch() -> Optional[dict[str, Any]]:
+        async def _fetch() -> Optional[ShikimoriAnime]:
             async with self._session.post(url=GRAPHQL_URL, json=body) as response:
                 data = json.loads(await response.text())
             animes = data["data"]["animes"]
@@ -151,12 +152,12 @@ class ShikimoriClient(BaseClient):
 
         return await self._retry(_fetch)
 
-    async def search(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
+    async def search(self, query: str, limit: int = 10) -> list[ShikimoriAnime]:
         logger.info(f"searching anime with query: {query}, limit: {limit}")
         query = f'{{ animes(search: "{query}", limit: {limit}) {{ {GRAPHQL_ARGS} }} }}'
         body = {"operationName": None, "query": query, "variables": {}}
 
-        async def _fetch() -> list[dict[str, Any]]:
+        async def _fetch() -> list[ShikimoriAnime]:
             async with self._session.post(url=GRAPHQL_URL, json=body) as response:
                 data = json.loads(await response.text())
             return list(map(process_anime, data["data"]["animes"]))
