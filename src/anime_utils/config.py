@@ -38,6 +38,13 @@ class IDsMoeClientSettings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 
 
+class ShikimoriClientSettings(BaseSettings):
+    rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=5)
+    retry_settings: RetrySettings = RetrySettings()
+
+    model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
+
+
 class LocalSettings(BaseSettings):
     xml_path: Optional[str] = None
     pickle_path: Optional[str] = None
@@ -47,6 +54,7 @@ class Settings(BaseSettings):
     cache_dir: str = "~/.cache/anime-utils"
     anidb_scraper_settings: AniDBScraperSettings = AniDBScraperSettings()
     idsmoe_client_settings: IDsMoeClientSettings
+    shikimori_client_settings: ShikimoriClientSettings = ShikimoriClientSettings()
     local_settings: LocalSettings = LocalSettings()
 
     @classmethod
