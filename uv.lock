@@ -160,11 +160,15 @@ dependencies = [
     { name = "aiolimiter" },
     { name = "aiosqlite" },
     { name = "docstring-parser" },
-    { name = "fastmcp" },
     { name = "parsel" },
     { name = "pydantic-settings", extra = ["yaml"] },
     { name = "rapidfuzz" },
     { name = "tenacity" },
+]
+
+[package.optional-dependencies]
+mcp = [
+    { name = "fastmcp" },
 ]
 
 [package.dev-dependencies]
@@ -185,12 +189,13 @@ requires-dist = [
     { name = "aiolimiter", specifier = ">=1.2.1" },
     { name = "aiosqlite", specifier = ">=0.22.0" },
     { name = "docstring-parser", specifier = ">=0.17.0" },
-    { name = "fastmcp", specifier = ">=2.14.1" },
+    { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=2.14.1" },
     { name = "parsel", specifier = ">=1.10.0" },
     { name = "pydantic-settings", extras = ["yaml"], specifier = ">=2.12.0" },
     { name = "rapidfuzz", specifier = ">=3.14.3" },
     { name = "tenacity", specifier = ">=9.1.2" },
 ]
+provides-extras = ["mcp"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -12,7 +12,6 @@ dependencies = [
     "aiolimiter>=1.2.1",
     "aiosqlite>=0.22.0",
     "docstring-parser>=0.17.0",
-    "fastmcp>=2.14.1",
     "parsel>=1.10.0",
     "pydantic-settings[yaml]>=2.12.0",
     "rapidfuzz>=3.14.3",
@@ -41,3 +40,8 @@ line-length = 120
 
 [project.scripts]
 anime-utils = "anime_utils.cli:main"
+
+[project.optional-dependencies]
+mcp = [
+    "fastmcp>=2.14.1",
+]
