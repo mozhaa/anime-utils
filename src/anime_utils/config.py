@@ -1,3 +1,4 @@
+from email.policy import HTTP
 from functools import cache
 from typing import Optional
 
@@ -15,34 +16,30 @@ class RetrySettings(BaseSettings):
     initial_delay: float = 1
 
 
-class BaseClientSettings(BaseSettings):
+class HTTPClientSettings(BaseSettings):
     cookies_file: Optional[str] = None
     socks_url: Optional[str] = None
-    rate_limit: RateLimitSettings
+    rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=10)
     retry_settings: RetrySettings = RetrySettings()
 
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 
 
-class AniDBScraperSettings(BaseClientSettings):
+class AniDBScraperSettings(HTTPClientSettings):
     rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=10)
 
 
-class IDsMoeClientSettings(BaseSettings):
+class IDsMoeClientSettings(HTTPClientSettings):
     api_key: str
-    rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=5)
     cache_db_name: str = "idsmoe.db"
     cache_ttl: float = 60 * 60 * 24
-    retry_settings: RetrySettings = RetrySettings()
 
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 
 
-class ShikimoriClientSettings(BaseSettings):
-    rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=5)
+class ShikimoriClientSettings(HTTPClientSettings):
     cache_db_name: str = "shikimori.db"
     cache_ttl: float = 60 * 60 * 24
-    retry_settings: RetrySettings = RetrySettings()
 
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 
@@ -57,6 +54,7 @@ class Settings(BaseSettings):
     anidb_scraper_settings: AniDBScraperSettings = AniDBScraperSettings()
     idsmoe_client_settings: IDsMoeClientSettings
     shikimori_client_settings: ShikimoriClientSettings = ShikimoriClientSettings()
+    mal_client_settings: HTTPClientSettings = HTTPClientSettings()
     local_settings: LocalSettings = LocalSettings()
 
     @classmethod

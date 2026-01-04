@@ -1,19 +1,13 @@
 import json
 import time
-from contextlib import AsyncExitStack
 from pathlib import Path
-from typing import Any, Literal, Optional, Self
+from typing import Any, Literal, Optional
 
-import aiohttp
 import aiosqlite
-from aiohttp import ClientSession
-from aiolimiter import AsyncLimiter
-from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from anime_utils.cache import BaseCacheWithInvalids
-from anime_utils.clients.base import BaseClient
+from anime_utils.clients.base import HTTPClient
 from anime_utils.config import get_settings
-from anime_utils.http import default_headers
 
 
 class IDsMoeSQLiteCache(BaseCacheWithInvalids[tuple[Any, str], dict]):
@@ -21,7 +15,7 @@ class IDsMoeSQLiteCache(BaseCacheWithInvalids[tuple[Any, str], dict]):
         self.db_path = db_path
         self.ttl = ttl
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self):
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.db = await aiosqlite.connect(self.db_path)
         await self.db.execute(
@@ -103,73 +97,56 @@ class IDsMoeSQLiteCache(BaseCacheWithInvalids[tuple[Any, str], dict]):
         await self.db.commit()
 
 
-class IDsMoeClient(BaseClient):
+class IDsMoeClient(HTTPClient):
     """Client for mapping anime IDs via ids.moe API."""
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
         max_rate: Optional[int] = None,
         time_period: Optional[int] = None,
-        cache_db_path: Optional[Path] = None,
-        cache_ttl: Optional[float] = None,
         max_attempts: Optional[int] = None,
         backoff_factor: Optional[float] = None,
         initial_delay: Optional[float] = None,
+        base_url: Optional[str] = None,
+        socks_url: Optional[str] = None,
+        cookies_file: Optional[str] = None,
+        cache_db_path: Optional[Path] = None,
+        cache_ttl: Optional[float] = None,
+        api_key: Optional[str] = None,
     ):
-        """Initialize the IDsMoe client.
-
-        Args:
-            api_key: API key for authentication
-            max_rate: Maximum number of requests per time period
-            time_period: Time period in seconds for rate limiting
-            cache_db_path: Path to SQLite cache database
-            cache_ttl: Cache time-to-live in seconds
-            max_attempts: Maximum number of retry attempts
-            backoff_factor: Multiplier for exponential backoff
-            initial_delay: Initial delay for retry in seconds
-        """
         settings = get_settings()
         if api_key is None:
             api_key = settings.idsmoe_client_settings.api_key
-        if max_rate is None:
-            max_rate = settings.idsmoe_client_settings.rate_limit.max_rate
-        if time_period is None:
-            time_period = settings.idsmoe_client_settings.rate_limit.time_period
         if cache_db_path is None:
             cache_db_path = Path(settings.cache_dir).expanduser() / settings.idsmoe_client_settings.cache_db_name
         if cache_ttl is None:
             cache_ttl = settings.idsmoe_client_settings.cache_ttl
-        if max_attempts is None:
-            max_attempts = settings.idsmoe_client_settings.retry_settings.max_attempts
-        if backoff_factor is None:
-            backoff_factor = settings.idsmoe_client_settings.retry_settings.backoff_factor
-        if initial_delay is None:
-            initial_delay = settings.idsmoe_client_settings.retry_settings.initial_delay
 
         self.api_key = api_key
-        self._limiter = AsyncLimiter(max_rate=max_rate, time_period=time_period)
-        self._retry = AsyncRetrying(
-            stop=stop_after_attempt(max_attempts),
-            wait=wait_exponential(multiplier=backoff_factor, min=initial_delay),
-            retry=retry_if_exception_type((aiohttp.ClientError, aiohttp.ClientResponseError)),
+        self._cache_db_path = cache_db_path
+        self._cache_ttl = cache_ttl
+
+        super().__init__(
+            get_settings().idsmoe_client_settings,
+            max_rate,
+            time_period,
+            max_attempts,
+            backoff_factor,
+            initial_delay,
+            base_url,
+            socks_url,
+            cookies_file,
         )
 
-        headers = default_headers.copy()
-        headers["Authorization"] = f"Bearer {self.api_key}"
-        self._session = ClientSession(base_url="https://api.ids.moe", headers=headers)
-
-        self._cache = IDsMoeSQLiteCache(cache_db_path, cache_ttl)
-
-    async def __aenter__(self) -> Self:
-        self._stack = AsyncExitStack()
-        await self._stack.__aenter__()
-        await self._stack.enter_async_context(self._cache)
-        await self._stack.enter_async_context(self._session)
+    async def __aenter__(self):
+        await super().__aenter__()
+        self._cache = IDsMoeSQLiteCache(self._cache_db_path, self._cache_ttl)
+        await self._cache.__aenter__()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        await self._stack.__aexit__(exc_type, exc_val, exc_tb)
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self._cache.__aexit__(exc_type, exc_val, exc_tb)
+        await super().__aexit__(exc_type, exc_val, exc_tb)
 
     async def get(self, id_: int, platform: str) -> Optional[dict[str, Any]]:
         """Get anime information and ID mappings for a given ID and platform.
@@ -187,12 +164,12 @@ class IDsMoeClient(BaseClient):
         if result is not None:
             return result or None
 
-        async def _fetch() -> Optional[dict[str, Any]]:
-            async with self._session.get(f"/ids/{id_}?platform={platform}") as response:
-                if response.ok:
-                    result = await response.json()
-                    await self._cache.set((id_, platform), result)
-                    return result
-                return None
-
-        return await (await self._retry(_fetch))
+        async for attempt in self._retry:
+            with attempt:
+                async with self._limiter:
+                    async with self._session.get(f"/ids/{id_}?platform={platform}") as response:
+                        if response.ok:
+                            result = await response.json()
+                            await self._cache.set((id_, platform), result)
+                            return result
+                        return None

@@ -6,11 +6,15 @@ import aiohttp
 from aiolimiter import AsyncLimiter
 from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from anime_utils.cache import FileCache
-from anime_utils.http import CachedHTTPClient, default_headers
+from anime_utils.config import HTTPClientSettings
 from anime_utils.utils import AioCookieJar
 
 logger = logging.getLogger(__name__)
+
+default_headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"
+}
 
 
 class BaseClient:
@@ -24,27 +28,30 @@ class BaseClient:
 class HTTPClient(BaseClient):
     def __init__(
         self,
-        cache_dir: str,
-        max_rate: int,
-        time_period: int,
-        max_attempts: int,
-        backoff_factor: float,
-        initial_delay: float,
-        base_url: str,
-        socks_url: Optional[str],
+        settings: HTTPClientSettings,
+        max_rate: Optional[int] = None,
+        time_period: Optional[int] = None,
+        max_attempts: Optional[int] = None,
+        backoff_factor: Optional[float] = None,
+        initial_delay: Optional[float] = None,
+        base_url: Optional[str] = None,
+        socks_url: Optional[str] = None,
         cookies_file: Optional[str] = None,
     ) -> None:
-        self.cache_dir = Path(cache_dir).expanduser()
-        self.max_rate = max_rate
-        self.time_period = time_period
-        self._retry = AsyncRetrying(
-            stop=stop_after_attempt(max_attempts),
-            wait=wait_exponential(multiplier=backoff_factor, min=initial_delay),
-            retry=retry_if_exception_type((aiohttp.ClientError, aiohttp.ClientResponseError)),
-        )
+        self.max_rate = max_rate or settings.rate_limit.max_rate
+        self.time_period = time_period or settings.rate_limit.time_period
+        self.max_attempts = max_attempts or settings.retry_settings.max_attempts
+        self.backoff_factor = backoff_factor or settings.retry_settings.backoff_factor
+        self.initial_delay = initial_delay or settings.retry_settings.initial_delay
         self.base_url = base_url
         self.socks_url = socks_url
         self.cookies_file = cookies_file
+
+        self._retry = AsyncRetrying(
+            stop=stop_after_attempt(self.max_attempts),
+            wait=wait_exponential(multiplier=self.backoff_factor, min=self.initial_delay),
+            retry=retry_if_exception_type((aiohttp.ClientError, aiohttp.ClientResponseError)),
+        )
 
     async def __aenter__(self):
         connector = None
@@ -72,8 +79,6 @@ class HTTPClient(BaseClient):
             cookie_jar=self._cookie_jar,  # type: ignore
         )
         self._limiter = AsyncLimiter(self.max_rate, self.time_period)
-        self._cache = FileCache(self.cache_dir)
-        self._http_client = CachedHTTPClient(self._session, self._cache, self._limiter, self._retry)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

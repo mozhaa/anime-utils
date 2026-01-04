@@ -1,8 +1,11 @@
 import hashlib
 import json
+import logging
+from pathlib import Path
 from typing import Any, Literal, Optional
 from urllib.parse import quote, urlencode
 
+from anime_utils.cache import FileCache
 from anime_utils.clients.anidb.core import (
     get_characters,
     get_main_info,
@@ -22,6 +25,8 @@ from anime_utils.clients.anidb.types import (
 from anime_utils.clients.base import HTTPClient
 from anime_utils.config import get_settings
 
+logger = logging.getLogger(__name__)
+
 
 class AniDBScraper(HTTPClient):
     """Client for scraping AniDB anime information."""
@@ -30,52 +35,54 @@ class AniDBScraper(HTTPClient):
 
     def __init__(
         self,
-        cache_dir: Optional[str] = None,
         max_rate: Optional[int] = None,
         time_period: Optional[int] = None,
-        socks_url: Optional[str] = None,
-        cookies_file: Optional[str] = None,
         max_attempts: Optional[int] = None,
         backoff_factor: Optional[float] = None,
         initial_delay: Optional[float] = None,
+        base_url: Optional[str] = None,
+        socks_url: Optional[str] = None,
+        cookies_file: Optional[str] = None,
+        cache_dir: Optional[str] = None,
     ) -> None:
-        """Initialize the AniDB scraper.
-
-        Args:
-            cache_dir: Directory to cache HTTP responses
-            max_rate: Maximum number of requests per time period
-            time_period: Time period in seconds for rate limiting
-            socks_url: SOCKS proxy URL
-            cookies_file: Path to cookies file for session persistence
-        """
         settings = get_settings()
         if cache_dir is None:
             cache_dir = settings.cache_dir
-        if max_rate is None:
-            max_rate = settings.anidb_scraper_settings.rate_limit.max_rate
-        if time_period is None:
-            time_period = settings.anidb_scraper_settings.rate_limit.time_period
-        if socks_url is None:
-            socks_url = settings.anidb_scraper_settings.socks_url
-        if cookies_file is None:
-            cookies_file = settings.anidb_scraper_settings.cookies_file
-        if max_attempts is None:
-            max_attempts = settings.anidb_scraper_settings.retry_settings.max_attempts
-        if backoff_factor is None:
-            backoff_factor = settings.anidb_scraper_settings.retry_settings.backoff_factor
-        if initial_delay is None:
-            initial_delay = settings.anidb_scraper_settings.retry_settings.initial_delay
+
+        self._cache_dir = Path(cache_dir).expanduser()
         super().__init__(
-            cache_dir,
+            get_settings().anidb_scraper_settings,
             max_rate,
             time_period,
             max_attempts,
             backoff_factor,
             initial_delay,
-            "https://anidb.net",
+            base_url,
             socks_url,
             cookies_file,
         )
+
+    async def __aenter__(self):
+        await super().__aenter__()
+        self._cache = FileCache(self._cache_dir)
+        return self
+
+    async def _fetch_page(self, cache_key: str, url: str) -> str:
+        cached = await self._cache.get(cache_key)
+        if cached is not None:
+            logger.info(f"cache hit for {cache_key}")
+            return cached.decode("utf-8")
+
+        logger.info(f"cache miss for {cache_key}")
+        async for attempt in self._retry:
+            with attempt:
+                async with self._limiter:
+                    async with self._session.get(url) as response:
+                        response.raise_for_status()
+                        text = await response.text()
+
+        await self._cache.set(cache_key, text.encode("utf-8"))
+        return text
 
     async def get_tags(self, anime_id: int, with_descriptions: bool = False) -> AniDBTags:
         """Get tags for an anime from AniDB.
@@ -87,7 +94,7 @@ class AniDBScraper(HTTPClient):
         Returns:
             List of tags for anime
         """
-        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        text = await self._fetch_page(f"anidb-{anime_id}", f"/anime/{anime_id}")
         tags = get_tags(text)
         if not with_descriptions:
 
@@ -113,7 +120,7 @@ class AniDBScraper(HTTPClient):
         Returns:
             Main information about the anime
         """
-        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        text = await self._fetch_page(f"anidb-{anime_id}", f"/anime/{anime_id}")
         return get_main_info(text)
 
     async def get_characters(self, anime_id: int) -> list[AniDBCharacter]:
@@ -125,7 +132,7 @@ class AniDBScraper(HTTPClient):
         Returns:
             List of characters in the anime
         """
-        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        text = await self._fetch_page(f"anidb-{anime_id}", f"/anime/{anime_id}")
         return get_characters(text)
 
     async def get_similar(self, anime_id: int) -> list[AniDBSimilarAnime]:
@@ -137,7 +144,7 @@ class AniDBScraper(HTTPClient):
         Returns:
             List of similar anime
         """
-        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        text = await self._fetch_page(f"anidb-{anime_id}", f"/anime/{anime_id}")
         return get_similar(text)
 
     async def search_by_tags(
@@ -245,8 +252,7 @@ class AniDBScraper(HTTPClient):
         query = urlencode(query_params, quote_via=quote)
 
         cache_key = "anidb-search-" + hashlib.sha256(json.dumps(query_params, sort_keys=True).encode()).hexdigest()[:16]
-        text = await self._http_client.get(f"/anime/?{query}", cache_key)
-
+        text = await self._fetch_page(cache_key, f"/anime/?{query}")
         results = get_search_results(text)
         if limit:
             results = results[:limit]
@@ -261,5 +267,5 @@ class AniDBScraper(HTTPClient):
         Returns:
             List of songs for the anime
         """
-        text = await self._http_client.get(f"/anime/{anime_id}", f"anidb-{anime_id}")
+        text = await self._fetch_page(f"anidb-{anime_id}", f"/anime/{anime_id}")
         return get_songs(text)

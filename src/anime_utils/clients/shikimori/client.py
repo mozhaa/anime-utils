@@ -1,17 +1,13 @@
 import json
 import logging
-from contextlib import AsyncExitStack
 from pathlib import Path, PurePosixPath
 from typing import Any, Optional, cast
 from urllib.parse import parse_qsl, urlparse
 
-from aiohttp import ClientSession
-
 from anime_utils.cache import SQLiteCache
-from anime_utils.clients.base import BaseClient
+from anime_utils.clients.base import HTTPClient
 from anime_utils.clients.shikimori.types import ShikimoriAnime
 from anime_utils.config import get_settings
-from anime_utils.http import default_headers
 
 logger = logging.getLogger(__name__)
 
@@ -82,54 +78,50 @@ def get_anidb_id(url: str) -> int:
     raise RuntimeError(f"Cannot parse anidb_id from anidb_url: {url}!")
 
 
-class ShikimoriClient(BaseClient):
+class ShikimoriClient(HTTPClient):
     def __init__(
         self,
         max_rate: Optional[int] = None,
         time_period: Optional[int] = None,
-        cache_db_path: Optional[Path] = None,
-        cache_ttl: Optional[float] = None,
         max_attempts: Optional[int] = None,
         backoff_factor: Optional[float] = None,
         initial_delay: Optional[float] = None,
+        base_url: Optional[str] = None,
+        socks_url: Optional[str] = None,
+        cookies_file: Optional[str] = None,
+        cache_db_path: Optional[Path] = None,
+        cache_ttl: Optional[float] = None,
     ):
         settings = get_settings()
-        if max_rate is None:
-            max_rate = settings.shikimori_client_settings.rate_limit.max_rate
-        if time_period is None:
-            time_period = settings.shikimori_client_settings.rate_limit.time_period
         if cache_db_path is None:
             cache_db_path = Path(settings.cache_dir).expanduser() / settings.shikimori_client_settings.cache_db_name
         if cache_ttl is None:
             cache_ttl = settings.shikimori_client_settings.cache_ttl
-        if max_attempts is None:
-            max_attempts = settings.shikimori_client_settings.retry_settings.max_attempts
-        if backoff_factor is None:
-            backoff_factor = settings.shikimori_client_settings.retry_settings.backoff_factor
-        if initial_delay is None:
-            initial_delay = settings.shikimori_client_settings.retry_settings.initial_delay
 
-        from aiolimiter import AsyncLimiter
-        from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential
+        self._cache_db_path = cache_db_path
+        self._cache_ttl = cache_ttl
 
-        self._limiter = AsyncLimiter(max_rate=max_rate, time_period=time_period)
-        self._retry = AsyncRetrying(
-            stop=stop_after_attempt(max_attempts),
-            wait=wait_exponential(multiplier=backoff_factor, min=initial_delay),
-            retry=retry_if_exception_type((json.JSONDecodeError,)),
+        super().__init__(
+            settings.shikimori_client_settings,
+            max_rate,
+            time_period,
+            max_attempts,
+            backoff_factor,
+            initial_delay,
+            base_url,
+            socks_url,
+            cookies_file,
         )
-        self._session = ClientSession(headers=default_headers)
-        self._cache = SQLiteCache(cache_db_path, cache_ttl)
 
     async def __aenter__(self):
-        self._stack = AsyncExitStack()
-        await self._stack.__aenter__()
-        await self._stack.enter_async_context(self._cache)
-        await self._stack.enter_async_context(self._session)
+        await super().__aenter__()
+        self._cache = SQLiteCache(self._cache_db_path, self._cache_ttl)
+        await self._cache.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self._stack.__aexit__(exc_type, exc_val, exc_tb)
+        await self._cache.__aexit__(exc_type, exc_val, exc_tb)
+        await super().__aexit__(exc_type, exc_val, exc_tb)
 
     async def get_anime(self, mal_id: int) -> Optional[ShikimoriAnime]:
         cache_key = f"anime:{mal_id}"
@@ -141,25 +133,25 @@ class ShikimoriClient(BaseClient):
         query = f'{{ animes(ids: "{mal_id}", limit: 1) {{ {GRAPHQL_ARGS} }} }}'
         body = {"operationName": None, "query": query, "variables": {}}
 
-        async def _fetch() -> Optional[ShikimoriAnime]:
-            async with self._session.post(url=GRAPHQL_URL, json=body) as response:
-                data = json.loads(await response.text())
-            animes = data["data"]["animes"]
-            result = process_anime(animes[0]) if len(animes) > 0 else None
-            if result is not None:
-                await self._cache.set(cache_key, json.dumps(result))
-            return result
-
-        return await self._retry(_fetch)
+        async for attempt in self._retry:
+            with attempt:
+                async with self._limiter:
+                    async with self._session.post(url=GRAPHQL_URL, json=body) as response:
+                        data = json.loads(await response.text())
+        animes = data["data"]["animes"]
+        result = process_anime(animes[0]) if len(animes) > 0 else None
+        if result is not None:
+            await self._cache.set(cache_key, json.dumps(result))
+        return result
 
     async def search(self, query: str, limit: int = 10) -> list[ShikimoriAnime]:
         logger.info(f"searching anime with query: {query}, limit: {limit}")
         query = f'{{ animes(search: "{query}", limit: {limit}) {{ {GRAPHQL_ARGS} }} }}'
         body = {"operationName": None, "query": query, "variables": {}}
 
-        async def _fetch() -> list[ShikimoriAnime]:
-            async with self._session.post(url=GRAPHQL_URL, json=body) as response:
-                data = json.loads(await response.text())
-            return list(map(process_anime, data["data"]["animes"]))
-
-        return await self._retry(_fetch)
+        async for attempt in self._retry:
+            with attempt:
+                async with self._limiter:
+                    async with self._session.post(url=GRAPHQL_URL, json=body) as response:
+                        data = json.loads(await response.text())
+        return list(map(process_anime, data["data"]["animes"]))
