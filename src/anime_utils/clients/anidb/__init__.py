@@ -1,5 +1,5 @@
-from .scraper import AniDBScraper
-from .types import (
+from anime_utils.clients.anidb.scraper import AniDBScraper
+from anime_utils.clients.anidb.types import (
     AniDBAnimeTag,
     AniDBCharacter,
     AniDBCharacterTag,

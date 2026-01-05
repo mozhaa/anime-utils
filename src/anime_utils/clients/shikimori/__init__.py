@@ -1,5 +1,5 @@
-from .client import ShikimoriClient
-from .types import (
+from anime_utils.clients.shikimori.client import ShikimoriClient
+from anime_utils.clients.shikimori.types import (
     ShikimoriAnime,
     ShikimoriDate,
     ShikimoriExternalLink,
