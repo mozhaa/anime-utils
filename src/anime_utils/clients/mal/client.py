@@ -8,6 +8,8 @@ from anime_utils.clients.mal.types import MALItem
 
 
 class MALClient(HTTPClient):
+    """Client for accessing undocumented MyAnimeList API."""
+
     def __init__(
         self,
         max_rate: Optional[int] = None,
@@ -32,6 +34,14 @@ class MALClient(HTTPClient):
         )
 
     async def search(self, query: str) -> dict[str, list[MALItem]]:
+        """Search for anime on MyAnimeList.
+
+        Args:
+            query: Search query string
+
+        Returns:
+            Dictionary mapping category names to lists of search results
+        """
         url = f"https://myanimelist.net/search/prefix.json?type=all&keyword={quote_plus(query)}&v=1"
 
         async for attempt in self._retry:

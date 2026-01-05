@@ -79,6 +79,8 @@ def get_anidb_id(url: str) -> int:
 
 
 class ShikimoriClient(HTTPClient):
+    """Client for accessing Shikimori GraphQL API."""
+
     def __init__(
         self,
         max_rate: Optional[int] = None,
@@ -124,6 +126,14 @@ class ShikimoriClient(HTTPClient):
         await super().__aexit__(exc_type, exc_val, exc_tb)
 
     async def get_anime(self, mal_id: int) -> Optional[ShikimoriAnime]:
+        """Get anime information from Shikimori by MyAnimeList ID (the same as Shikimori ID).
+
+        Args:
+            mal_id: The MyAnimeList anime ID
+
+        Returns:
+            Anime information or None if not found
+        """
         cache_key = f"anime:{mal_id}"
         cached = await self._cache.get(cache_key)
         if cached is not None:
@@ -145,6 +155,15 @@ class ShikimoriClient(HTTPClient):
         return result
 
     async def search(self, query: str, limit: int = 10) -> list[ShikimoriAnime]:
+        """Search for anime on Shikimori.
+
+        Args:
+            query: Search query string
+            limit: Maximum number of results to return
+
+        Returns:
+            List of anime matching the search query
+        """
         logger.info(f"searching anime with query: {query}, limit: {limit}")
         query = f'{{ animes(search: "{query}", limit: {limit}) {{ {GRAPHQL_ARGS} }} }}'
         body = {"operationName": None, "query": query, "variables": {}}
