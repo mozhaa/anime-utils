@@ -1,3 +1,4 @@
-from anime_utils.clients.local.main import LocalClient
+from .main import LocalClient
+from .types import SearchResult
 
-__all__ = ["LocalClient"]
+__all__ = ["LocalClient", "SearchResult"]

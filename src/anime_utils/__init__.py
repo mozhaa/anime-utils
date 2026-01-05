@@ -1,3 +1,3 @@
-from .clients import AniDBScraper, IDsMoeClient, MALClient, ShikimoriClient
+from .clients import AniDBScraper, IDsMoeClient, LocalClient, MALClient, ShikimoriClient
 
-__all__ = ["AniDBScraper", "IDsMoeClient", "MALClient", "ShikimoriClient"]
+__all__ = ["AniDBScraper", "IDsMoeClient", "LocalClient", "MALClient", "ShikimoriClient"]

@@ -148,7 +148,7 @@ class IDsMoeClient(HTTPClient):
         await self._cache.__aexit__(exc_type, exc_val, exc_tb)
         await super().__aexit__(exc_type, exc_val, exc_tb)
 
-    async def get(self, id_: int, platform: str) -> Optional[dict[str, Any]]:
+    async def get(self, id_: int, platform: str) -> Optional[dict[str, Optional[int | str]]]:
         """Get anime information and ID mappings for a given ID and platform.
 
         Args:
