@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Any, Literal, Optional
 from urllib.parse import quote, urlencode
 
-from anime_utils.cache import FileCache
+from anime_utils._cache import FileCache
+from anime_utils._config import get_settings
 from anime_utils.clients.anidb.core import (
     get_characters,
     get_main_info,
@@ -23,7 +24,6 @@ from anime_utils.clients.anidb.types import (
     AniDBTags,
 )
 from anime_utils.clients.base import HTTPClient
-from anime_utils.config import get_settings
 
 logger = logging.getLogger(__name__)
 

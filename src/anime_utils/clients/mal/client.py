@@ -2,9 +2,9 @@ import json
 from typing import Optional
 from urllib.parse import quote_plus
 
+from anime_utils._config import get_settings
 from anime_utils.clients.base import HTTPClient
 from anime_utils.clients.mal.types import MALItem
-from anime_utils.config import get_settings
 
 
 class MALClient(HTTPClient):

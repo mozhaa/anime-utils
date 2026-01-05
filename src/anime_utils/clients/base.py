@@ -6,8 +6,8 @@ import aiohttp
 from aiolimiter import AsyncLimiter
 from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from anime_utils.config import HTTPClientSettings
-from anime_utils.utils import AioCookieJar
+from anime_utils._config import HTTPClientSettings
+from anime_utils._utils import AioCookieJar
 
 logger = logging.getLogger(__name__)
 

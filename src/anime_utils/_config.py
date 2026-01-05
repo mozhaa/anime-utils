@@ -1,4 +1,3 @@
-from email.policy import HTTP
 from functools import cache
 from typing import Optional
 

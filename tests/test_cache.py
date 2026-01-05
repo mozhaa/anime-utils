@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from anime_utils.cache import FileCache
+from anime_utils._cache import FileCache
 
 
 @pytest.fixture

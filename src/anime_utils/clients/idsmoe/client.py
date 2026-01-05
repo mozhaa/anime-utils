@@ -5,9 +5,9 @@ from typing import Any, Literal, Optional
 
 import aiosqlite
 
-from anime_utils.cache import BaseCacheWithInvalids
+from anime_utils._cache import BaseCacheWithInvalids
+from anime_utils._config import get_settings
 from anime_utils.clients.base import HTTPClient
-from anime_utils.config import get_settings
 
 
 class IDsMoeSQLiteCache(BaseCacheWithInvalids[tuple[Any, str], dict]):

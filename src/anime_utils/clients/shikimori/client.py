@@ -4,10 +4,10 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Optional, cast
 from urllib.parse import parse_qsl, urlparse
 
-from anime_utils.cache import SQLiteCache
+from anime_utils._cache import SQLiteCache
+from anime_utils._config import get_settings
 from anime_utils.clients.base import HTTPClient
 from anime_utils.clients.shikimori.types import ShikimoriAnime
-from anime_utils.config import get_settings
 
 logger = logging.getLogger(__name__)
 
