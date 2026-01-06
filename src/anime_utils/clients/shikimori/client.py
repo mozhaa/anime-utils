@@ -11,7 +11,7 @@ from anime_utils.clients.shikimori.types import ShikimoriAnime
 
 logger = logging.getLogger(__name__)
 
-GRAPHQL_URL = "https://shikimori.one/api/graphql"
+GRAPHQL_URL = "/api/graphql"
 GRAPHQL_ARGS = (
     "id, name, russian, english, japanese, synonyms, "
     "kind, rating, score, status, episodes, duration, "
@@ -99,6 +99,8 @@ class ShikimoriClient(HTTPClient):
             cache_db_path = Path(settings.cache_dir).expanduser() / settings.shikimori_client_settings.cache_db_name
         if cache_ttl is None:
             cache_ttl = settings.shikimori_client_settings.cache_ttl
+        if base_url is None:
+            base_url = "https://shikimori.one"
 
         self._cache_db_path = cache_db_path
         self._cache_ttl = cache_ttl

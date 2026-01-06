@@ -21,6 +21,9 @@ class MALClient(HTTPClient):
         socks_url: Optional[str] = None,
         cookies_file: Optional[str] = None,
     ):
+        if base_url is None:
+            base_url = "https://myanimelist.net"
+
         super().__init__(
             get_settings().mal_client_settings,
             max_rate,
@@ -42,7 +45,7 @@ class MALClient(HTTPClient):
         Returns:
             Dictionary mapping category names to lists of search results
         """
-        url = f"https://myanimelist.net/search/prefix.json?type=all&keyword={quote_plus(query)}&v=1"
+        url = f"/search/prefix.json?type=all&keyword={quote_plus(query)}&v=1"
 
         async for attempt in self._retry:
             with attempt:

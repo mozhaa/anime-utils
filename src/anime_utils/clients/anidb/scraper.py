@@ -48,6 +48,8 @@ class AniDBScraper(HTTPClient):
         settings = get_settings()
         if cache_dir is None:
             cache_dir = settings.cache_dir
+        if base_url is None:
+            base_url = "https://anidb.net"
 
         self._cache_dir = Path(cache_dir).expanduser()
         super().__init__(

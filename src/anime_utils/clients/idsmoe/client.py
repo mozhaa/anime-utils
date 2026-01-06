@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any, Literal, Optional
@@ -8,6 +9,8 @@ import aiosqlite
 from anime_utils._cache import BaseCacheWithInvalids
 from anime_utils._config import get_settings
 from anime_utils.clients.base import HTTPClient
+
+logger = logging.getLogger(__name__)
 
 
 class IDsMoeSQLiteCache(BaseCacheWithInvalids[tuple[Any, str], dict]):
@@ -123,8 +126,10 @@ class IDsMoeClient(HTTPClient):
             cache_db_path = Path(settings.cache_dir).expanduser() / settings.idsmoe_client_settings.cache_db_name
         if cache_ttl is None:
             cache_ttl = settings.idsmoe_client_settings.cache_ttl
+        if base_url is None:
+            base_url = "https://api.ids.moe"
 
-        self.api_key = api_key
+        self._headers = {"Authorization": f"Bearer {api_key}"}
         self._cache_db_path = cache_db_path
         self._cache_ttl = cache_ttl
 
@@ -169,9 +174,10 @@ class IDsMoeClient(HTTPClient):
         async for attempt in self._retry:
             with attempt:
                 async with self._limiter:
-                    async with self._session.get(f"/ids/{id_}?platform={platform}") as response:
+                    async with self._session.get(f"/ids/{id_}?platform={platform}", headers=self._headers) as response:
                         if response.ok:
                             result = await response.json()
                             await self._cache.set((id_, platform), result)
                             return result
+                        logger.warning(f"ids.moe returned {response.status=}")
                         return None
