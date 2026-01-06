@@ -94,6 +94,7 @@ class ShikimoriClient(HTTPClient):
         base_url: Optional[str] = None,
         socks_url: Optional[str] = None,
         cookies_file: Optional[str] = None,
+        timeout: Optional[float] = None,
         cache_db_path: Optional[Path] = None,
         cache_ttl: Optional[float] = None,
     ):
@@ -118,6 +119,7 @@ class ShikimoriClient(HTTPClient):
             base_url,
             socks_url,
             cookies_file,
+            timeout,
         )
 
     async def __aenter__(self):

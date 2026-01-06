@@ -43,6 +43,7 @@ class AniDBScraper(HTTPClient):
         base_url: Optional[str] = None,
         socks_url: Optional[str] = None,
         cookies_file: Optional[str] = None,
+        timeout: Optional[float] = None,
         cache_dir: Optional[str] = None,
     ) -> None:
         settings = get_settings()
@@ -62,6 +63,7 @@ class AniDBScraper(HTTPClient):
             base_url,
             socks_url,
             cookies_file,
+            timeout,
         )
 
     async def __aenter__(self):

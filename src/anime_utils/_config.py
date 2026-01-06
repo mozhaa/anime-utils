@@ -10,9 +10,9 @@ class RateLimitSettings(BaseSettings):
 
 
 class RetrySettings(BaseSettings):
-    max_attempts: int = 1
+    max_attempts: int = 2
     backoff_factor: float = 1
-    initial_delay: float = 1
+    initial_delay: float = 0
 
 
 class HTTPClientSettings(BaseSettings):
@@ -20,6 +20,7 @@ class HTTPClientSettings(BaseSettings):
     socks_url: Optional[str] = None
     rate_limit: RateLimitSettings = RateLimitSettings(max_rate=3, time_period=10)
     retry_settings: RetrySettings = RetrySettings()
+    timeout: float = 5
 
     model_config = SettingsConfigDict(env_nested_delimiter="__", nested_model_default_partial_update=True)
 

@@ -20,6 +20,7 @@ class MALClient(HTTPClient):
         base_url: Optional[str] = None,
         socks_url: Optional[str] = None,
         cookies_file: Optional[str] = None,
+        timeout: Optional[float] = None,
     ):
         if base_url is None:
             base_url = "https://myanimelist.net"
@@ -34,6 +35,7 @@ class MALClient(HTTPClient):
             base_url,
             socks_url,
             cookies_file,
+            timeout,
         )
 
     async def search(self, query: str) -> dict[str, list[MALItem]]:

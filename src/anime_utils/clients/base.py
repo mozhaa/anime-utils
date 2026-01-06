@@ -37,15 +37,17 @@ class HTTPClient(BaseClient):
         base_url: Optional[str] = None,
         socks_url: Optional[str] = None,
         cookies_file: Optional[str] = None,
+        timeout: Optional[float] = None,
     ) -> None:
-        self.max_rate = max_rate or settings.rate_limit.max_rate
-        self.time_period = time_period or settings.rate_limit.time_period
-        self.max_attempts = max_attempts or settings.retry_settings.max_attempts
-        self.backoff_factor = backoff_factor or settings.retry_settings.backoff_factor
-        self.initial_delay = initial_delay or settings.retry_settings.initial_delay
+        self.max_rate = max_rate if max_rate is not None else settings.rate_limit.max_rate
+        self.time_period = time_period if time_period is not None else settings.rate_limit.time_period
+        self.max_attempts = max_attempts if max_attempts is not None else settings.retry_settings.max_attempts
+        self.backoff_factor = backoff_factor if backoff_factor is not None else settings.retry_settings.backoff_factor
+        self.initial_delay = initial_delay if initial_delay is not None else settings.retry_settings.initial_delay
         self.base_url = base_url
-        self.socks_url = socks_url
-        self.cookies_file = cookies_file
+        self.socks_url = socks_url if socks_url is not None else settings.socks_url
+        self.cookies_file = cookies_file if cookies_file is not None else settings.cookies_file
+        self.timeout = timeout if timeout is not None else settings.timeout
 
         self._retry = AsyncRetrying(
             stop=stop_after_attempt(self.max_attempts),
@@ -77,6 +79,7 @@ class HTTPClient(BaseClient):
             headers=default_headers,
             connector=connector,
             cookie_jar=self._cookie_jar,  # type: ignore
+            timeout=aiohttp.ClientTimeout(total=self.timeout),
         )
         self._limiter = AsyncLimiter(self.max_rate, self.time_period)
         return self
