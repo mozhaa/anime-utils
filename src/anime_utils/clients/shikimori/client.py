@@ -33,8 +33,7 @@ def _format_date(date_data: Optional[dict[str, int]]) -> str:
 
 
 def process_anime(anime: dict[str, Any]) -> ShikimoriAnime:
-    anidb_link = next((link for link in anime.get("externalLinks", []) if link["kind"] == "anime_db"), None)
-    anidb_id = int(anidb_link["url"].split("/")[-1]) if anidb_link else None
+    anidb_url = next((link["url"] for link in anime.get("externalLinks", []) if link["kind"] == "anime_db"), None)
 
     return ShikimoriAnime(
         id=int(anime["id"]),
@@ -64,7 +63,7 @@ def process_anime(anime: dict[str, Any]) -> ShikimoriAnime:
         external_links=[
             ShikimoriExternalLink(kind=link["kind"], url=link["url"]) for link in anime.get("externalLinks", [])
         ],
-        anidb_id=anidb_id,
+        anidb_id=get_anidb_id(anidb_url) if anidb_url is not None else None,
     )
 
 
