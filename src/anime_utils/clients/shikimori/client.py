@@ -1,13 +1,14 @@
 import json
 import logging
+from datetime import date
 from pathlib import Path, PurePosixPath
-from typing import Any, Optional, cast
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlparse
 
 from anime_utils._cache import SQLiteCache
 from anime_utils._config import get_settings
 from anime_utils.clients.base import HTTPClient
-from anime_utils.clients.shikimori.types import ShikimoriAnime
+from anime_utils.clients.shikimori.types import ShikimoriAnime, ShikimoriExternalLink, ShikimoriVideo
 
 logger = logging.getLogger(__name__)
 
@@ -22,47 +23,49 @@ GRAPHQL_ARGS = (
 )
 
 
+def _format_date(date_data: Optional[dict[str, int]]) -> str:
+    if not date_data:
+        return ""
+    try:
+        return date(date_data["year"], date_data["month"], date_data["day"]).strftime("%Y-%m-%d")
+    except (ValueError, TypeError, KeyError):
+        return ""
+
+
 def process_anime(anime: dict[str, Any]) -> ShikimoriAnime:
-    def set_default[key_t, val_t](obj: dict[key_t, val_t], key: key_t, value: val_t) -> dict[key_t, val_t]:
-        if obj.get(key, None) is None:
-            obj[key] = value
-        return obj
+    anidb_link = next((link for link in anime.get("externalLinks", []) if link["kind"] == "anime_db"), None)
+    anidb_id = int(anidb_link["url"].split("/")[-1]) if anidb_link else None
 
-    def set_defaults[key_t, val_t](obj: dict[key_t, val_t], defaults: dict[key_t, val_t]) -> dict[key_t, val_t]:
-        for key, value in defaults.items():
-            obj = set_default(obj, key, value)
-        return obj
-
-    anime = set_default(
-        anime,
-        "poster",
-        {
-            "original_url": "https://shikimori.one/assets/globals/missing/main.png",
-            "main_url": "https://shikimori.one/assets/globals/missing/preview_animanga.png",
-        },
+    return ShikimoriAnime(
+        id=int(anime["id"]),
+        name=anime["name"],
+        russian=anime["russian"],
+        english=anime.get("english"),
+        japanese=anime.get("japanese"),
+        synonyms=anime.get("synonyms", []),
+        kind=anime["kind"],
+        rating=anime.get("rating"),
+        score=anime.get("score"),
+        status=anime["status"],
+        episodes=anime.get("episodes") or 0,
+        duration=anime.get("duration") or 0,
+        aired_on=_format_date(anime.get("airedOn")),
+        released_on=_format_date(anime.get("releasedOn")),
+        url=anime["url"],
+        poster_original_url=anime["poster"]["originalUrl"],
+        poster_main_url=anime["poster"]["mainUrl"],
+        genres=[g["name"] for g in anime.get("genres", [])],
+        videos=[
+            ShikimoriVideo(kind=v["kind"], name=v["name"], url=v["url"], player_url=v["playerUrl"])
+            for v in anime.get("videos", [])
+        ],
+        scores_stats={item["score"]: item["count"] for item in anime.get("scoresStats", [])},
+        statuses_stats={item["status"]: item["count"] for item in anime.get("statusesStats", [])},
+        external_links=[
+            ShikimoriExternalLink(kind=link["kind"], url=link["url"]) for link in anime.get("externalLinks", [])
+        ],
+        anidb_id=anidb_id,
     )
-
-    anime["statuses_stats"] = set_defaults(
-        dict(map(lambda x: x.values(), anime["statuses_stats"])),
-        {
-            "planned": 0,
-            "completed": 0,
-            "watching": 0,
-            "dropped": 0,
-            "on_hold": 0,
-        },
-    )
-
-    anime["scores_stats"] = set_defaults(
-        dict(map(lambda x: x.values(), anime["scores_stats"])),
-        {i: 0 for i in range(1, 11)},
-    )
-
-    anidb_url = next(iter([x["url"] for x in anime["external_links"] if "anidb.net" in x["url"]]), None)
-    anime["anidb_id"] = get_anidb_id(anidb_url) if anidb_url is not None else None
-    anime["id"] = int(anime["id"])
-
-    return cast(ShikimoriAnime, anime)
 
 
 def get_anidb_id(url: str) -> int:

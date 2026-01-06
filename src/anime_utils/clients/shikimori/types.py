@@ -1,21 +1,6 @@
 from typing import Optional, TypedDict
 
 
-class ShikimoriDate(TypedDict):
-    year: Optional[int]
-    month: Optional[int]
-    day: Optional[int]
-
-
-class ShikimoriPoster(TypedDict):
-    original_url: str
-    main_url: str
-
-
-class ShikimoriGenre(TypedDict):
-    name: str
-
-
 class ShikimoriVideo(TypedDict):
     kind: str
     name: str
@@ -41,11 +26,12 @@ class ShikimoriAnime(TypedDict):
     status: str
     episodes: Optional[int]
     duration: Optional[int]
-    aired_on: ShikimoriDate
-    released_on: ShikimoriDate
+    aired_on: str
+    released_on: str
     url: str
-    poster: ShikimoriPoster
-    genres: list[ShikimoriGenre]
+    poster_original_url: str
+    poster_main_url: str
+    genres: list[str]
     videos: list[ShikimoriVideo]
     scores_stats: dict[int, int]
     statuses_stats: dict[str, int]
