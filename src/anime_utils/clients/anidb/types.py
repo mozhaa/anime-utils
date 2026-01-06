@@ -89,7 +89,7 @@ class AniDBSong(TypedDict):
     number: int
     song_name: str
     song_id: int
-    episode_range: str
+    episode_range: Optional[str]
     rating_value: Optional[float]
     rating_vote_count: int
     staff: dict[str, str]

@@ -471,14 +471,7 @@ def get_songs(text: str) -> list[AniDBSong]:
     def add_song() -> None:
         nonlocal number
 
-        if (
-            category is None
-            or song_id is None
-            or song_name is None
-            or episode_range is None
-            or rating_vote_count is None
-            or staff is None
-        ):
+        if category is None or song_id is None or song_name is None or rating_vote_count is None:
             raise RuntimeError("invalid songtable structure")
 
         songs.append(
@@ -523,10 +516,10 @@ def get_songs(text: str) -> list[AniDBSong]:
         elif "credit" in classes:
             credit = element.css("a::text").get("").strip()
             if credit == "":
-                raise RuntimeError(f"song credit type is empty: {element.get()}")
+                credit = None
         elif "creator" in classes:
             if credit is None:
-                raise RuntimeError("invalid songtable structure")
+                continue
 
             creators = []
             for creator_element in element.css("a"):
@@ -541,8 +534,8 @@ def get_songs(text: str) -> list[AniDBSong]:
             staff[credit] = ", ".join(creators)
         elif "eprange" in classes:
             episode_range = element.css("::text").get("").strip()
-            if episode_range == "":
-                raise RuntimeError(f"episode range is empty: {element.get()}")
+            if len(episode_range) == 0:
+                episode_range = None
         elif "rating" in classes:
             rating_value_str = element.css("::text").get()
             if rating_value_str is None:

@@ -28,6 +28,12 @@ def anidb_17910_html() -> str:
 
 
 @pytest.fixture
+def anidb_6327_html() -> str:
+    with open("tests/resources/anidb_6327.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@pytest.fixture
 def search_results_html() -> str:
     with open("tests/resources/search_results.html", "r", encoding="utf-8") as f:
         return f.read()
@@ -443,3 +449,15 @@ def test_get_songs(
     for credit_type, creator in staff_subset.items():
         assert credit_type in song["staff"]
         assert song["staff"][credit_type] == creator
+
+
+def test_get_songs_empty_episode_range(anidb_6327_html: str):
+    songs = get_songs(anidb_6327_html)
+
+    song = _find_song(songs, "background music", 1)
+    assert song["song_name"] == "Sanpo"
+    assert song["song_id"] == 48833
+    assert song["episode_range"] is None
+    assert song["rating_value"] is None
+    assert song["rating_vote_count"] == 1
+    assert song["staff"] == {}
