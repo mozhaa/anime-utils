@@ -117,6 +117,8 @@ class IDsMoeClient(HTTPClient):
         settings = get_settings()
         if api_key is None:
             api_key = settings.idsmoe_client_settings.api_key
+            if api_key is None:
+                raise ValueError("IDsMoeClient requires idsmoe_client_settings.api_key in config")
         if cache_db_path is None:
             cache_db_path = Path(settings.cache_dir).expanduser() / settings.idsmoe_client_settings.cache_db_name
         if cache_ttl is None:

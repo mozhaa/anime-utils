@@ -29,7 +29,7 @@ class AniDBScraperSettings(HTTPClientSettings):
 
 
 class IDsMoeClientSettings(HTTPClientSettings):
-    api_key: str
+    api_key: Optional[str] = None
     cache_db_name: str = "idsmoe.db"
     cache_ttl: float = 60 * 60 * 24
 
@@ -51,7 +51,7 @@ class LocalSettings(BaseSettings):
 class Settings(BaseSettings):
     cache_dir: str = "~/.cache/anime-utils"
     anidb_scraper_settings: AniDBScraperSettings = AniDBScraperSettings()
-    idsmoe_client_settings: IDsMoeClientSettings
+    idsmoe_client_settings: IDsMoeClientSettings = IDsMoeClientSettings()
     shikimori_client_settings: ShikimoriClientSettings = ShikimoriClientSettings()
     mal_client_settings: HTTPClientSettings = HTTPClientSettings()
     local_settings: LocalSettings = LocalSettings()
