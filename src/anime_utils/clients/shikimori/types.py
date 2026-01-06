@@ -8,8 +8,8 @@ class ShikimoriDate(TypedDict):
 
 
 class ShikimoriPoster(TypedDict):
-    originalUrl: str
-    mainUrl: str
+    original_url: str
+    main_url: str
 
 
 class ShikimoriGenre(TypedDict):
@@ -20,7 +20,7 @@ class ShikimoriVideo(TypedDict):
     kind: str
     name: str
     url: str
-    playerUrl: str
+    player_url: str
 
 
 class ShikimoriExternalLink(TypedDict):
@@ -41,13 +41,13 @@ class ShikimoriAnime(TypedDict):
     status: str
     episodes: Optional[int]
     duration: Optional[int]
-    airedOn: ShikimoriDate
-    releasedOn: ShikimoriDate
+    aired_on: ShikimoriDate
+    released_on: ShikimoriDate
     url: str
     poster: ShikimoriPoster
     genres: list[ShikimoriGenre]
     videos: list[ShikimoriVideo]
-    scoresStats: dict[int, int]
-    statusesStats: dict[str, int]
-    externalLinks: list[ShikimoriExternalLink]
+    scores_stats: dict[int, int]
+    statuses_stats: dict[str, int]
+    external_links: list[ShikimoriExternalLink]
     anidb_id: Optional[int]

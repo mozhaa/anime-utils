@@ -37,13 +37,13 @@ def process_anime(anime: dict[str, Any]) -> ShikimoriAnime:
         anime,
         "poster",
         {
-            "originalUrl": "https://shikimori.one/assets/globals/missing/main.png",
-            "mainUrl": "https://shikimori.one/assets/globals/missing/preview_animanga.png",
+            "original_url": "https://shikimori.one/assets/globals/missing/main.png",
+            "main_url": "https://shikimori.one/assets/globals/missing/preview_animanga.png",
         },
     )
 
-    anime["statusesStats"] = set_defaults(
-        dict(map(lambda x: x.values(), anime["statusesStats"])),
+    anime["statuses_stats"] = set_defaults(
+        dict(map(lambda x: x.values(), anime["statuses_stats"])),
         {
             "planned": 0,
             "completed": 0,
@@ -53,12 +53,12 @@ def process_anime(anime: dict[str, Any]) -> ShikimoriAnime:
         },
     )
 
-    anime["scoresStats"] = set_defaults(
-        dict(map(lambda x: x.values(), anime["scoresStats"])),
+    anime["scores_stats"] = set_defaults(
+        dict(map(lambda x: x.values(), anime["scores_stats"])),
         {i: 0 for i in range(1, 11)},
     )
 
-    anidb_url = next(iter([x["url"] for x in anime["externalLinks"] if "anidb.net" in x["url"]]), None)
+    anidb_url = next(iter([x["url"] for x in anime["external_links"] if "anidb.net" in x["url"]]), None)
     anime["anidb_id"] = get_anidb_id(anidb_url) if anidb_url is not None else None
     anime["id"] = int(anime["id"])
 
