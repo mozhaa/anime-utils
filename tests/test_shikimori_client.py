@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from anime_utils.clients.shikimori import ShikimoriClient
+from anime_utils.clients.shikimori import ShikimoriAnime, ShikimoriClient
 
 
 @pytest.mark.parametrize(
@@ -19,6 +19,8 @@ async def test_get_anime(mal_id: int, info_subset: dict[str, Any]):
         anime = await shikimori.get_anime(mal_id)
 
     assert anime is not None
+    for key in ShikimoriAnime.__annotations__:
+        assert key in anime
     for key, value in info_subset.items():
         assert key in anime
         assert anime[key] == value
@@ -38,4 +40,7 @@ async def test_search(query: str, expected_name: str):
         results = await shikimori.search(query, limit=1)
 
     assert len(results) > 0
+    for anime in results:
+        for key in ShikimoriAnime.__annotations__:
+            assert key in anime
     assert results[0]["name"] == expected_name
