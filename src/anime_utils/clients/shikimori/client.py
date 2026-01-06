@@ -21,6 +21,8 @@ GRAPHQL_ARGS = (
     "videos { kind name url playerUrl }, scoresStats { score count }, "
     "statusesStats { status count }, externalLinks { kind url }"
 )
+DEFAULT_ORIGINAL_POSTER_URL = "https://shikimori.one/assets/globals/missing/main.png"
+DEFAULT_MAIN_POSTER_URL = "https://shikimori.one/assets/globals/missing/preview_animanga.png"
 
 
 def _format_date(date_data: Optional[dict[str, int]]) -> str:
@@ -34,7 +36,10 @@ def _format_date(date_data: Optional[dict[str, int]]) -> str:
 
 def process_anime(anime: dict[str, Any]) -> ShikimoriAnime:
     anidb_url = next((link["url"] for link in anime.get("externalLinks", []) if link["kind"] == "anime_db"), None)
-
+    scores = {score: 0 for score in range(1, 11)}
+    scores.update({int(item["score"]): item["count"] for item in anime.get("scoresStats", [])})
+    statuses = {status: 0 for status in ["planned", "completed", "watching", "dropped", "on_hold"]}
+    statuses.update({item["status"]: item["count"] for item in anime.get("statusesStats", [])})
     return ShikimoriAnime(
         id=int(anime["id"]),
         name=anime["name"],
@@ -46,20 +51,20 @@ def process_anime(anime: dict[str, Any]) -> ShikimoriAnime:
         rating=anime.get("rating"),
         score=anime.get("score"),
         status=anime["status"],
-        episodes=anime.get("episodes") or 0,
-        duration=anime.get("duration") or 0,
+        episodes=anime.get("episodes"),
+        duration=anime.get("duration"),
         aired_on=_format_date(anime.get("airedOn")),
         released_on=_format_date(anime.get("releasedOn")),
         url=anime["url"],
-        poster_original_url=anime["poster"]["originalUrl"],
-        poster_main_url=anime["poster"]["mainUrl"],
+        poster_original_url=anime["poster"]["originalUrl"] if "poster" in anime else DEFAULT_ORIGINAL_POSTER_URL,
+        poster_main_url=anime["poster"]["mainUrl"] if "poster" in anime else DEFAULT_MAIN_POSTER_URL,
         genres=[g["name"] for g in anime.get("genres", [])],
         videos=[
             ShikimoriVideo(kind=v["kind"], name=v["name"], url=v["url"], player_url=v["playerUrl"])
             for v in anime.get("videos", [])
         ],
-        scores_stats={item["score"]: item["count"] for item in anime.get("scoresStats", [])},
-        statuses_stats={item["status"]: item["count"] for item in anime.get("statusesStats", [])},
+        scores_stats=scores,
+        statuses_stats=statuses,
         external_links=[
             ShikimoriExternalLink(kind=link["kind"], url=link["url"]) for link in anime.get("externalLinks", [])
         ],
