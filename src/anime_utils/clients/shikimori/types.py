@@ -26,8 +26,8 @@ class ShikimoriAnime(TypedDict):
     status: str
     episodes: Optional[int]
     duration: Optional[int]
-    aired_on: str
-    released_on: str
+    aired_on: Optional[str]
+    released_on: Optional[str]
     url: str
     poster_original_url: str
     poster_main_url: str

@@ -25,9 +25,9 @@ DEFAULT_ORIGINAL_POSTER_URL = "https://shikimori.one/assets/globals/missing/main
 DEFAULT_MAIN_POSTER_URL = "https://shikimori.one/assets/globals/missing/preview_animanga.png"
 
 
-def _format_date(date_data: Optional[dict[str, int]]) -> str:
+def _format_date(date_data: Optional[dict[str, int]]) -> Optional[str]:
     if not date_data:
-        return ""
+        return None
     try:
         return date(date_data["year"], date_data["month"], date_data["day"]).strftime("%Y-%m-%d")
     except (ValueError, TypeError, KeyError):
