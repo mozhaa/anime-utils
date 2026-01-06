@@ -16,7 +16,6 @@ async def test_search(query: str, results_subset: dict[str, list[int]]):
     async with MALClient() as client:
         result = await client.search(query)
 
-    print(result)
     for category, ids_subset in results_subset.items():
         assert category in result
         result_ids = set(item["id"] for item in result[category])
