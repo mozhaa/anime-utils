@@ -33,7 +33,7 @@ class ShikimoriAnime(TypedDict):
     poster_main_url: str
     genres: list[str]
     videos: list[ShikimoriVideo]
-    scores_stats: dict[int, int]
+    scores_stats: dict[str, int]
     statuses_stats: dict[str, int]
     external_links: list[ShikimoriExternalLink]
     anidb_id: Optional[int]
